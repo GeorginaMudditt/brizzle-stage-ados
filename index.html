@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brizzle Stage Ados</title>
+    <link rel="icon" href="assets/brizzle-logo.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=22" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        <img src="assets/brizzle-logo.png" alt="" width="56" height="56" />
+        <span class="brand-name">Brizzle Stage Ados</span>
+      </a>
+      <div class="header-tools">
+        <p class="player-badge" id="player-badge" hidden>
+          <span id="dancer-name"></span>
+          <span id="star-count"></span>
+        </p>
+      <div class="user-menu">
+        <button
+          type="button"
+          class="user-button"
+          id="user-button"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          aria-controls="user-list"
+        >
+          <span class="user-button-face" hidden>
+            <img alt="" width="36" height="36" />
+          </span>
+          <span class="user-button-label">Choose a user</span>
+          <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+            <path
+              d="M5 7.5 10 12.5 15 7.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <ul class="user-list" id="user-list" role="listbox" aria-label="Users" hidden>
+          <li role="none">
+            <button
+              type="button"
+              class="user-option"
+              role="option"
+              data-name="Sasha"
+              data-src="assets/sasha-tiger.png"
+              aria-selected="false"
+            >
+              <img src="assets/sasha-tiger.png" alt="" width="48" height="48" />
+              <span>Sasha</span>
+              <span class="user-stars"></span>
+            </button>
+          </li>
+          <li role="none">
+            <button
+              type="button"
+              class="user-option"
+              role="option"
+              data-name="Sandy"
+              data-src="assets/sandy-frog.png"
+              aria-selected="false"
+            >
+              <img src="assets/sandy-frog.png" alt="" width="48" height="48" />
+              <span>Sandy</span>
+              <span class="user-stars"></span>
+            </button>
+          </li>
+          <li role="none">
+            <button
+              type="button"
+              class="user-option"
+              role="option"
+              data-name="Elena"
+              data-src="assets/elena-squirrel.png"
+              aria-selected="false"
+            >
+              <img src="assets/elena-squirrel.png" alt="" width="48" height="48" />
+              <span>Elena</span>
+              <span class="user-stars"></span>
+            </button>
+          </li>
+          <li role="none">
+            <button
+              type="button"
+              class="user-option"
+              role="option"
+              data-name="Georgina"
+              data-src="assets/georgina-orangutan.png"
+              aria-selected="false"
+            >
+              <img src="assets/georgina-orangutan.png" alt="" width="48" height="48" />
+              <span>Georgina</span>
+              <span class="user-stars"></span>
+            </button>
+          </li>
+        </ul>
+      </div>
+      </div>
+    </header>
+    <main class="page">
+      <p class="user-status" id="user-status" aria-live="polite"></p>
+      <div class="stage" id="stage" hidden>
+        <figure class="dancer">
+          <img id="dancer-img" alt="" width="140" height="140" />
+        </figure>
+      </div>
+      <ul class="card-grid" id="home">
+        <li class="card card-vocabulary">
+          <a class="card-open" href="#vocabulary">
+            <span>Vocabulary</span>
+          </a>
+        </li>
+        <li class="card card-reading">
+          <span>Reading</span>
+          <p class="soon">There is no reading content yet. Please come back later.</p>
+        </li>
+        <li class="card card-listening">
+          <span>Listening</span>
+          <p class="soon">There is no listening content yet. Please come back later.</p>
+        </li>
+        <li class="card card-speaking">
+          <a class="card-open" href="#speaking">
+            <span>Speaking</span>
+          </a>
+        </li>
+        <li class="card card-writing">
+          <span>Writing</span>
+          <p class="soon">There is no writing content yet. Please come back later.</p>
+        </li>
+        <li class="card card-grammar">
+          <a class="card-open" href="#grammar">
+            <span>Grammar</span>
+          </a>
+        </li>
+      </ul>
+
+      <section class="speaking" id="speaking">
+        <div id="speaking-menu">
+          <a class="back-button" href="#home" aria-label="Back to all skills">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            All skills
+          </a>
+          <h1 id="speaking-title" tabindex="-1">Speaking</h1>
+          <div class="game-choices">
+            <button type="button" class="game-choice game-choice-picture" id="open-pictures">
+              <span class="game-name">Describe a picture</span>
+              <span class="game-blurb">Look carefully. Who is there, where are they, and what are they doing?</span>
+            </button>
+          </div>
+        </div>
+        <div id="speaking-play" hidden>
+          <button type="button" class="back-button" id="speaking-back" aria-label="Back to Speaking">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Speaking
+          </button>
+          <h1 id="picture-title" tabindex="-1">Describe a picture</h1>
+          <p class="prompt">Look carefully. Who is there, where are they, and what are they doing? You can record your voice and then listen to the recording. Tick the star when you have finished.</p>
+        <div class="viewer">
+          <button type="button" class="nav-arrow nav-prev" id="picture-prev" aria-label="Previous picture">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <figure class="picture-frame">
+            <img
+              id="picture"
+              src="assets/picture-birthday.jpg?v=2"
+              alt="Six friends around a birthday cake with candles, balloons, and presents."
+              width="960"
+              height="720"
+            />
+            <figcaption id="picture-caption">Birthday party · 1 of 10</figcaption>
+          </figure>
+          <button type="button" class="nav-arrow nav-next" id="picture-next" aria-label="Next picture">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M7.5 4.5 13 10l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <div class="picture-tools">
+          <button type="button" class="tool-button" id="picture-done" aria-pressed="false">☆ Mark done</button>
+          <button type="button" class="tool-button" id="record-button">Record</button>
+          <audio class="playback" id="playback" controls hidden></audio>
+        </div>
+        <div class="thumbs" id="picture-thumbs" role="list" aria-label="Pictures"></div>
+        <p class="star-earned" id="picture-star" hidden></p>
+        <p class="picture-status" id="picture-status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="panel" id="vocabulary">
+        <div id="vocab-topics">
+          <a class="back-button" href="#home" aria-label="Back to all skills">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            All skills
+          </a>
+          <h1 id="vocab-title" tabindex="-1">Vocabulary</h1>
+          <div class="game-choices">
+            <button type="button" class="game-choice game-choice-topic" data-topic="clothes">
+              <span class="game-name">Clothes</span>
+              <span class="game-blurb">Words for what you wear.</span>
+            </button>
+            <button type="button" class="game-choice game-choice-topic game-choice-verbs" data-topic="verbs">
+              <span class="game-name">Verbs</span>
+              <span class="game-blurb">Words for what you do.</span>
+            </button>
+            <button type="button" class="game-choice game-choice-letters" id="open-letters">
+              <span class="game-name">Letter Shake</span>
+              <span class="game-blurb">Shake sixteen letters and write the words you can make.</span>
+            </button>
+          </div>
+        </div>
+        <div id="vocab-menu" hidden>
+          <button type="button" class="back-button" id="vocab-topics-back" aria-label="Back to Vocabulary">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Vocabulary
+          </button>
+          <h1 id="topic-title" tabindex="-1">Clothes</h1>
+          <div class="game-choices">
+            <button type="button" class="game-choice game-choice-match" data-game="match">
+              <span class="game-kicker">Game 1</span>
+              <span class="game-name">Match up</span>
+              <span class="game-blurb">Pair each English word with the French one.</span>
+            </button>
+            <button type="button" class="game-choice game-choice-memory" data-game="memory">
+              <span class="game-kicker">Game 2</span>
+              <span class="game-name">Memory</span>
+              <span class="game-blurb">Flip the cards and find the matching pairs.</span>
+            </button>
+          </div>
+        </div>
+        <div id="vocab-play" hidden>
+          <button type="button" class="back-button" id="vocab-back" aria-label="Back to Clothes">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span id="topic-back-label">Clothes</span>
+          </button>
+          <p class="eyebrow" id="topic-eyebrow">Vocabulary · Clothes</p>
+          <h1 id="game-title" tabindex="-1"></h1>
+          <p class="prompt" id="game-help"></p>
+          <p class="game-score" id="game-score"></p>
+          <div id="game-board"></div>
+          <p class="picture-status" id="game-status" aria-live="polite"></p>
+        </div>
+        <div id="letter-play" hidden>
+          <button type="button" class="back-button" id="letter-back" aria-label="Back to Vocabulary">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Vocabulary
+          </button>
+          <p class="eyebrow">Vocabulary · Letter Shake</p>
+          <h1 id="letter-title" tabindex="-1">Letter Shake</h1>
+          <p class="prompt" id="letter-help">Shake the letters. When they land, you have five minutes to write English words using the letters you can see. You can use a letter again only if it is showing more than once.</p>
+          <div class="letter-stage">
+            <div class="letter-box">
+              <div class="letter-grid" id="letter-grid" aria-label="Letter cubes"></div>
+              <button type="button" class="next-round" id="letter-shake">Shake the letters</button>
+            </div>
+            <div class="letter-write">
+              <p class="letter-timer" id="letter-timer">5:00</p>
+              <div id="letter-rows"></div>
+              <button type="button" class="tool-button" id="letter-add">Add a word</button>
+              <div class="picture-tools">
+                <button type="button" class="tool-button" id="letter-check">Check answers</button>
+                <button type="button" class="tool-button" id="letter-suggest">Suggest more words</button>
+              </div>
+              <div class="letter-suggestions" id="letter-suggestions" hidden>
+                <p>More words from these letters</p>
+                <ul id="letter-suggestion-list"></ul>
+              </div>
+              <p class="letter-total" id="letter-status" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="grammar">
+        <div id="grammar-topics">
+          <a class="back-button" href="#home" aria-label="Back to all skills">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            All skills
+          </a>
+          <h1 id="grammar-title" tabindex="-1">Grammar</h1>
+          <div class="game-choices">
+            <button type="button" class="game-choice game-choice-simple" data-lesson="simple">
+              <span class="game-name">Present simple</span>
+              <span class="game-blurb">Habits, facts, and the verb to be.</span>
+            </button>
+            <button type="button" class="game-choice game-choice-continuous" data-lesson="continuous">
+              <span class="game-name">Present continuous</span>
+              <span class="game-blurb">Actions happening now.</span>
+            </button>
+            <button type="button" class="game-choice game-choice-contrast" data-lesson="contrast">
+              <span class="game-name">Present simple versus present continuous</span>
+              <span class="game-blurb">How these two tenses are different.</span>
+            </button>
+          </div>
+        </div>
+        <div id="grammar-lesson" hidden>
+          <button type="button" class="back-button" id="grammar-back" aria-label="Back to Grammar">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Grammar
+          </button>
+          <p class="eyebrow" id="grammar-eyebrow"></p>
+          <h1 id="grammar-lesson-title" tabindex="-1"></h1>
+          <div id="grammar-explain"></div>
+          <div id="grammar-exercises"></div>
+          <button type="button" class="next-round" id="grammar-check">Check answers</button>
+          <p class="result-line" id="grammar-result" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+    <script src="app.js?v=20"></script>
+  </body>
+</html>

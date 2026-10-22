@@ -1,0 +1,1824 @@
+const button = document.querySelector("#user-button");
+const list = document.querySelector("#user-list");
+const options = [...list.querySelectorAll(".user-option")];
+const stage = document.querySelector("#stage");
+const dancerImg = document.querySelector("#dancer-img");
+const dancerName = document.querySelector("#dancer-name");
+const playerBadge = document.querySelector("#player-badge");
+const status = document.querySelector("#user-status");
+const buttonFace = document.querySelector(".user-button-face");
+const buttonImg = buttonFace.querySelector("img");
+const buttonLabel = document.querySelector(".user-button-label");
+const starCount = document.querySelector("#star-count");
+const pictureStar = document.querySelector("#picture-star");
+
+const progressKey = "brizzle-stage-ados";
+let currentId = "";
+let pendingStars = 0;
+let progress = loadProgress();
+
+function loadProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(progressKey));
+    if (!saved || typeof saved !== "object") {
+      return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {} };
+    }
+    return {
+      user: typeof saved.user === "string" ? saved.user : "",
+      stars: saved.stars && typeof saved.stars === "object" ? saved.stars : {},
+      pictures: saved.pictures && typeof saved.pictures === "object" ? saved.pictures : {},
+      pictureDone: saved.pictureDone && typeof saved.pictureDone === "object" ? saved.pictureDone : {},
+      memorySeen: saved.memorySeen && typeof saved.memorySeen === "object" ? saved.memorySeen : {},
+      grammarDone: saved.grammarDone && typeof saved.grammarDone === "object" ? saved.grammarDone : {},
+    };
+  } catch {
+    return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {} };
+  }
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem(progressKey, JSON.stringify(progress));
+  } catch {
+    // The star still shows for this visit if the browser cannot store it.
+  }
+}
+
+function starLabel(count) {
+  return `${count} ${count === 1 ? "star" : "stars"}`;
+}
+
+function pictureDoneList(id) {
+  const list = progress.pictureDone[id];
+  return Array.isArray(list) ? list.filter((index) => Number.isInteger(index)) : [];
+}
+
+function totalStars(id) {
+  if (!id) return 0;
+  return (progress.stars[id] || 0) + pictureDoneList(id).length;
+}
+
+function renderStars() {
+  options.forEach((option) => {
+    const id = option.dataset.name.toLowerCase();
+    const count = totalStars(id);
+    const chip = option.querySelector(".user-stars");
+    chip.textContent = `★ ${count}`;
+    chip.setAttribute("aria-label", starLabel(count));
+  });
+  if (!currentId) return;
+  const count = totalStars(currentId);
+  starCount.textContent = `★ ${count}`;
+  starCount.setAttribute("aria-label", starLabel(count));
+}
+
+function awardStar() {
+  if (!currentId) {
+    pendingStars += 1;
+    status.textContent = "Choose your name to keep your star.";
+    return "Choose your name to keep your star.";
+  }
+  progress.stars[currentId] = (progress.stars[currentId] || 0) + 1;
+  saveProgress();
+  renderStars();
+  const message = `${buttonLabel.textContent} earned a star. ${starLabel(totalStars(currentId))}.`;
+  status.textContent = message;
+  return message;
+}
+
+function claimPending(id) {
+  if (!progress.pictureDone) progress.pictureDone = {};
+  if (pendingStars) {
+    progress.stars[id] = (progress.stars[id] || 0) + pendingStars;
+    pendingStars = 0;
+  }
+  const waiting = pictureDoneList("pending");
+  if (waiting.length) {
+    const merged = new Set([...pictureDoneList(id), ...waiting]);
+    progress.pictureDone[id] = [...merged];
+    delete progress.pictureDone.pending;
+  }
+  if (!progress.memorySeen) progress.memorySeen = {};
+  if (Array.isArray(progress.memorySeen.pending) && progress.memorySeen.pending.length) {
+    const clothesKey = `${id}:clothes`;
+    const mergedWords = new Set([...(progress.memorySeen[clothesKey] || []), ...progress.memorySeen.pending]);
+    progress.memorySeen[clothesKey] = [...mergedWords];
+    delete progress.memorySeen.pending;
+  }
+  if (!progress.grammarDone) progress.grammarDone = {};
+  if (Array.isArray(progress.grammarDone.pending) && progress.grammarDone.pending.length) {
+    const mergedLessons = new Set([
+      ...(Array.isArray(progress.grammarDone[id]) ? progress.grammarDone[id] : []),
+      ...progress.grammarDone.pending,
+    ]);
+    progress.grammarDone[id] = [...mergedLessons];
+    delete progress.grammarDone.pending;
+  }
+  Object.keys(progress.memorySeen).forEach((key) => {
+    if (!key.startsWith("pending:")) return;
+    const topic = key.slice("pending:".length);
+    const nextKey = `${id}:${topic}`;
+    const mergedWords = new Set([
+      ...(Array.isArray(progress.memorySeen[nextKey]) ? progress.memorySeen[nextKey] : []),
+      ...progress.memorySeen[key],
+    ]);
+    progress.memorySeen[nextKey] = [...mergedWords];
+    delete progress.memorySeen[key];
+  });
+  saveProgress();
+  movePendingRecordings(id);
+}
+
+function setOpen(open) {
+  button.setAttribute("aria-expanded", String(open));
+  list.hidden = !open;
+  if (open) {
+    const selected =
+      options.find((option) => option.getAttribute("aria-selected") === "true") ||
+      options[0];
+    selected.focus();
+  }
+}
+
+function choose(option, restore) {
+  options.forEach((item) => item.setAttribute("aria-selected", "false"));
+  option.setAttribute("aria-selected", "true");
+
+  const name = option.dataset.name;
+  const src = option.dataset.src;
+  currentId = name.toLowerCase();
+  claimPending(currentId);
+  progress.user = currentId;
+  saveProgress();
+  renderStars();
+
+  buttonLabel.textContent = name;
+  buttonImg.src = src;
+  buttonFace.hidden = false;
+  dancerImg.src = src;
+  dancerImg.alt = "";
+  dancerName.textContent = name;
+  playerBadge.hidden = false;
+  stage.hidden = false;
+  status.textContent = `${name} is using Brizzle Stage Ados. ${starLabel(totalStars(currentId))}.`;
+
+  setOpen(false);
+  if (!restore) button.focus();
+}
+
+button.addEventListener("click", () => {
+  setOpen(list.hidden);
+});
+
+button.addEventListener("keydown", (event) => {
+  if ((event.key === "ArrowDown" || event.key === "ArrowUp") && list.hidden) {
+    event.preventDefault();
+    setOpen(true);
+  }
+  if (event.key === "Escape") {
+    setOpen(false);
+  }
+});
+
+options.forEach((option, index) => {
+  option.addEventListener("click", () => choose(option));
+  option.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      options[(index + 1) % options.length].focus();
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      options[(index - 1 + options.length) % options.length].focus();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      setOpen(false);
+      button.focus();
+    }
+  });
+});
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".user-menu")) {
+    setOpen(false);
+  }
+});
+
+renderStars();
+
+const pictures = [
+  {
+    src: "assets/picture-birthday.jpg?v=2",
+    label: "Birthday party",
+    alt: "Six friends around a birthday cake with candles, balloons, and presents.",
+  },
+  {
+    src: "assets/picture-football.jpg",
+    label: "Football match",
+    alt: "Children playing football on a sunny pitch, with friends cheering beside the field.",
+  },
+  {
+    src: "assets/picture-skatepark.jpg",
+    label: "Skate park",
+    alt: "Children skateboarding and scooting at a colourful city skate park.",
+  },
+  {
+    src: "assets/picture-camping.jpg",
+    label: "Camping trip",
+    alt: "Three children camping beside a lake, with a tent, backpacks, and a campfire.",
+  },
+  {
+    src: "assets/picture-band.jpg",
+    label: "Band practice",
+    alt: "Four children playing keyboard, drums, and guitar, and singing in a garage.",
+  },
+  {
+    src: "assets/picture-themepark.jpg",
+    label: "Theme park",
+    alt: "Three friends at a theme park, with a roller coaster, a ferris wheel, and a snack stall.",
+  },
+  {
+    src: "assets/picture-classroom.jpg?v=2",
+    label: "Classroom",
+    alt: "A teacher stands beside the whiteboard while a grumpy class looks toward her. One pupil is in a wheelchair, and one wears glasses.",
+  },
+  {
+    src: "assets/picture-work.jpg",
+    label: "At work",
+    alt: "Four adults working in an office, typing, talking on the phone, pointing at a chart, and carrying a folder.",
+  },
+  {
+    src: "assets/picture-beach.jpg?v=2",
+    label: "Beach",
+    alt: "Four friends at the beach, building a sandcastle, running with a ball, eating ice cream, and paddling.",
+  },
+  {
+    src: "assets/picture-baking.jpg",
+    label: "Baking",
+    alt: "Three children baking in a kitchen, stirring a bowl, decorating a cake, and tasting the icing.",
+  },
+];
+
+const picture = document.querySelector("#picture");
+const pictureCaption = document.querySelector("#picture-caption");
+const pictureStatus = document.querySelector("#picture-status");
+const picturePrev = document.querySelector("#picture-prev");
+const pictureNext = document.querySelector("#picture-next");
+const pictureThumbs = document.querySelector("#picture-thumbs");
+const speakingMenu = document.querySelector("#speaking-menu");
+const speakingPlay = document.querySelector("#speaking-play");
+const speakingTitle = document.querySelector("#speaking-title");
+const pictureTitle = document.querySelector("#picture-title");
+
+let pictureIndex = 0;
+
+pictures.forEach((item, index) => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "thumb";
+  button.setAttribute("aria-label", item.label);
+  button.innerHTML = `<img src="${item.src}" alt="">`;
+  button.addEventListener("click", () => showPicture(index));
+  pictureThumbs.append(button);
+});
+
+const thumbs = [...pictureThumbs.querySelectorAll(".thumb")];
+
+function showPicture(index) {
+  playback.pause();
+  if (recorder && recorder.state === "recording") recorder.stop();
+  pictureIndex = (index + pictures.length) % pictures.length;
+  const item = pictures[pictureIndex];
+  picture.src = item.src;
+  picture.alt = item.alt;
+  pictureCaption.textContent = `${item.label} · ${pictureIndex + 1} of ${pictures.length}`;
+  pictureStatus.textContent = pictureCaption.textContent;
+  pictureStar.hidden = true;
+  thumbs.forEach((thumb, thumbIndex) => {
+    if (thumbIndex === pictureIndex) {
+      thumb.setAttribute("aria-current", "true");
+    } else {
+      thumb.removeAttribute("aria-current");
+    }
+  });
+  markThumbs();
+  updatePictureTools();
+}
+
+picturePrev.addEventListener("click", () => showPicture(pictureIndex - 1));
+pictureNext.addEventListener("click", () => showPicture(pictureIndex + 1));
+
+const pictureDoneButton = document.querySelector("#picture-done");
+const recordButton = document.querySelector("#record-button");
+const playback = document.querySelector("#playback");
+const clipUrls = new Map();
+let recorder = null;
+let recordIndex = 0;
+
+function clipKey(id, index) {
+  return `${id || "pending"}:${index}`;
+}
+
+function openRecordings() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("brizzle-recordings", 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains("clips")) {
+        request.result.createObjectStore("clips");
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function rememberClip(key, blob) {
+  const previous = clipUrls.get(key);
+  if (previous) URL.revokeObjectURL(previous);
+  clipUrls.set(key, URL.createObjectURL(blob));
+}
+
+async function storeRecording(id, index, blob) {
+  const key = clipKey(id, index);
+  rememberClip(key, blob);
+  try {
+    const db = await openRecordings();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("clips", "readwrite");
+      tx.objectStore("clips").put(blob, key);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch {
+    // Playback still works for this visit from the copy kept in memory.
+  }
+}
+
+async function readRecording(id, index) {
+  const key = clipKey(id, index);
+  if (clipUrls.has(key)) return clipUrls.get(key);
+  try {
+    const db = await openRecordings();
+    const blob = await new Promise((resolve, reject) => {
+      const tx = db.transaction("clips", "readonly");
+      const request = tx.objectStore("clips").get(key);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
+    if (!blob) return "";
+    rememberClip(key, blob);
+    return clipUrls.get(key);
+  } catch {
+    return "";
+  }
+}
+
+async function movePendingRecordings(id) {
+  try {
+    const db = await openRecordings();
+    const keys = await new Promise((resolve, reject) => {
+      const request = db.transaction("clips", "readonly").objectStore("clips").getAllKeys();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+    const pendingKeys = keys.filter((key) => String(key).startsWith("pending:"));
+    for (const key of pendingKeys) {
+      const blob = await new Promise((resolve, reject) => {
+        const request = db.transaction("clips", "readonly").objectStore("clips").get(key);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+      if (!blob) continue;
+      const index = String(key).slice("pending:".length);
+      const nextKey = `${id}:${index}`;
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction("clips", "readwrite");
+        tx.objectStore("clips").put(blob, nextKey);
+        tx.objectStore("clips").delete(key);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+      if (clipUrls.has(key)) {
+        clipUrls.set(nextKey, clipUrls.get(key));
+        clipUrls.delete(key);
+      }
+    }
+    db.close();
+  } catch {
+    // The recording can still be played during this visit.
+  }
+  updatePictureTools();
+}
+
+function markThumbs() {
+  const done = new Set(pictureDoneList(currentId || "pending"));
+  thumbs.forEach((thumb, index) => {
+    thumb.classList.toggle("is-done", done.has(index));
+  });
+}
+
+function updatePictureTools() {
+  const owner = currentId || "pending";
+  const index = pictureIndex;
+  const done = pictureDoneList(owner).includes(index);
+  const recording = recorder && recorder.state === "recording";
+  pictureDoneButton.setAttribute("aria-pressed", String(done));
+  pictureDoneButton.textContent = done ? "★ Done" : "☆ Mark done";
+  pictureDoneButton.classList.toggle("is-done", done);
+  recordButton.textContent = recording ? "Stop" : "Record";
+  recordButton.classList.toggle("is-recording", recording);
+  recordButton.setAttribute("aria-pressed", String(recording));
+  markThumbs();
+  readRecording(owner, index).then((url) => {
+    if (pictureIndex !== index) return;
+    if (recorder && recorder.state === "recording" && recordIndex === index) {
+      playback.pause();
+      playback.hidden = true;
+      return;
+    }
+    if (!url) {
+      playback.removeAttribute("src");
+      playback.hidden = true;
+      return;
+    }
+    recordButton.textContent = "Record again";
+    if (playback.getAttribute("src") !== url) playback.src = url;
+    playback.hidden = false;
+  });
+}
+
+function togglePictureDone() {
+  const key = currentId || "pending";
+  const list = new Set(pictureDoneList(key));
+  const wasDone = list.has(pictureIndex);
+  if (wasDone) list.delete(pictureIndex);
+  else list.add(pictureIndex);
+  progress.pictureDone[key] = [...list];
+  saveProgress();
+  renderStars();
+  markThumbs();
+  updatePictureTools();
+  if (!wasDone && !currentId) {
+    pictureStar.hidden = false;
+    pictureStar.textContent = "Choose your name to keep this star.";
+    status.textContent = pictureStar.textContent;
+    return;
+  }
+  if (!wasDone) {
+    pictureStar.hidden = false;
+    pictureStar.textContent = `${buttonLabel.textContent} earned a star. ${starLabel(totalStars(currentId))}.`;
+    status.textContent = pictureStar.textContent;
+    return;
+  }
+  pictureStar.hidden = true;
+  if (currentId) {
+    status.textContent = `${buttonLabel.textContent} is using Brizzle Stage Ados. ${starLabel(totalStars(currentId))}.`;
+  }
+}
+
+async function startRecording() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === "undefined") {
+    pictureStar.hidden = false;
+    pictureStar.textContent = "This browser cannot record sound.";
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const chunks = [];
+    recordIndex = pictureIndex;
+    const preferred = ["audio/webm", "audio/mp4"];
+    const mimeType = preferred.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+    recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    recorder.ondataavailable = (event) => {
+      if (event.data.size) chunks.push(event.data);
+    };
+    recorder.onstop = () => {
+      stream.getTracks().forEach((track) => track.stop());
+      const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+      const index = recordIndex;
+      storeRecording(currentId, index, blob).then(() => {
+        if (pictureIndex === index) updatePictureTools();
+      });
+      recorder = null;
+      updatePictureTools();
+    };
+    recorder.start();
+    updatePictureTools();
+  } catch {
+    pictureStar.hidden = false;
+    pictureStar.textContent = "Allow the microphone to record.";
+    recorder = null;
+  }
+}
+
+function toggleRecording() {
+  if (recorder && recorder.state === "recording") {
+    recorder.stop();
+    return;
+  }
+  startRecording();
+}
+
+pictureDoneButton.addEventListener("click", togglePictureDone);
+recordButton.addEventListener("click", toggleRecording);
+
+const savedOption = options.find((option) => option.dataset.name.toLowerCase() === progress.user);
+if (savedOption) choose(savedOption, true);
+
+function showSpeakingMenu() {
+  speakingPlay.hidden = true;
+  speakingMenu.hidden = false;
+  speakingTitle.focus();
+}
+
+function openPictures() {
+  speakingMenu.hidden = true;
+  speakingPlay.hidden = false;
+  showPicture(pictureIndex);
+  window.scrollTo(0, 0);
+  pictureTitle.focus();
+}
+
+document.querySelector("#open-pictures").addEventListener("click", openPictures);
+document.querySelector("#speaking-back").addEventListener("click", showSpeakingMenu);
+
+function onSpeakingPage() {
+  return location.hash === "#speaking";
+}
+
+document.addEventListener("keydown", (event) => {
+  if (!onSpeakingPage() || event.target.closest(".user-menu")) return;
+  if (!speakingPlay.hidden) {
+    if (event.key === "ArrowRight") showPicture(pictureIndex + 1);
+    else if (event.key === "ArrowLeft") showPicture(pictureIndex - 1);
+    else if (event.key === "Escape") {
+      event.preventDefault();
+      showSpeakingMenu();
+    }
+    return;
+  }
+  if (event.key === "Escape") {
+    event.preventDefault();
+    location.hash = "#home";
+  }
+});
+
+window.addEventListener("hashchange", () => {
+  if (onSpeakingPage()) showSpeakingMenu();
+  if (location.hash === "#vocabulary") showVocabTopics();
+  if (location.hash === "#grammar") showGrammarTopics();
+  window.scrollTo(0, 0);
+});
+
+showPicture(0);
+
+const clothes = [
+  ["belt", "ceinture"],
+  ["cap", "casquette"],
+  ["earring", "boucle d'oreille"],
+  ["fashion", "mode"],
+  ["glove", "gant"],
+  ["handbag", "sac à main"],
+  ["jewellery", "bijoux"],
+  ["jumper", "pull"],
+  ["leather", "cuir"],
+  ["necklace", "collier"],
+  ["pocket", "poche"],
+  ["raincoat", "imperméable"],
+  ["ring", "bague"],
+  ["scarf", "écharpe"],
+  ["sock", "chaussette"],
+  ["suit", "costume"],
+  ["sunglasses", "lunettes de soleil"],
+  ["swimming costume", "maillot de bain"],
+  ["tights", "collant"],
+  ["trainers", "baskets"],
+  ["uniform", "uniforme"],
+];
+
+const verbs = [
+  ["to begin", "commencer"],
+  ["to buy", "acheter"],
+  ["to come", "venir"],
+  ["to draw", "dessiner"],
+  ["to drive", "conduire"],
+  ["to feel", "sentir"],
+  ["to finish", "finir"],
+  ["to have", "avoir"],
+  ["to learn", "apprendre"],
+  ["to like", "aimer"],
+  ["to look", "regarder (une photo)"],
+  ["to love", "adorer"],
+  ["to see", "voir"],
+  ["to send", "envoyer"],
+  ["to show", "montrer"],
+  ["to sit", "asseoir"],
+  ["to start", "commencer"],
+  ["to study", "étudier"],
+  ["to take", "prendre"],
+  ["to teach", "apprendre (à quelqu'un)"],
+  ["to watch", "regarder (un film)"],
+  ["to work", "travailler"],
+];
+
+const topics = {
+  clothes: {
+    id: "clothes",
+    title: "Clothes",
+    done: "You matched every clothes word.",
+    words: clothes,
+  },
+  verbs: {
+    id: "verbs",
+    title: "Verbs",
+    done: "You matched every verb.",
+    words: verbs,
+  },
+};
+
+let currentTopic = topics.clothes;
+
+const vocabTopics = document.querySelector("#vocab-topics");
+const vocabMenu = document.querySelector("#vocab-menu");
+const vocabPlay = document.querySelector("#vocab-play");
+const vocabTitle = document.querySelector("#vocab-title");
+const topicTitle = document.querySelector("#topic-title");
+const topicBackLabel = document.querySelector("#topic-back-label");
+const topicEyebrow = document.querySelector("#topic-eyebrow");
+const vocabBack = document.querySelector("#vocab-back");
+const gameTitle = document.querySelector("#game-title");
+const gameHelp = document.querySelector("#game-help");
+const gameScore = document.querySelector("#game-score");
+const gameBoard = document.querySelector("#game-board");
+const gameStatus = document.querySelector("#game-status");
+
+function shuffle(items) {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swap]] = [copy[swap], copy[index]];
+  }
+  return copy;
+}
+
+function showVocabTopics() {
+  vocabPlay.hidden = true;
+  vocabMenu.hidden = true;
+  letterPlay.hidden = true;
+  vocabTopics.hidden = false;
+  vocabTitle.focus();
+}
+
+function showTopicMenu() {
+  vocabTopics.hidden = true;
+  vocabPlay.hidden = true;
+  letterPlay.hidden = true;
+  vocabMenu.hidden = false;
+  topicTitle.textContent = currentTopic.title;
+  topicBackLabel.textContent = currentTopic.title;
+  topicEyebrow.textContent = `Vocabulary · ${currentTopic.title}`;
+  vocabBack.setAttribute("aria-label", `Back to ${currentTopic.title}`);
+  window.scrollTo(0, 0);
+  topicTitle.focus();
+}
+
+function openTopic(id) {
+  currentTopic = topics[id];
+  showTopicMenu();
+}
+
+document.querySelector("#vocab-topics-back").addEventListener("click", showVocabTopics);
+document.querySelectorAll("[data-topic]").forEach((choice) => {
+  choice.addEventListener("click", () => openTopic(choice.dataset.topic));
+});
+document.querySelector("#vocab-back").addEventListener("click", showTopicMenu);
+
+document.querySelectorAll("[data-game]").forEach((choice) => {
+  choice.addEventListener("click", () => startGame(choice.dataset.game));
+});
+
+function startGame(kind) {
+  vocabTopics.hidden = true;
+  vocabMenu.hidden = true;
+  letterPlay.hidden = true;
+  vocabPlay.hidden = false;
+  gameStatus.textContent = "";
+  window.scrollTo(0, 0);
+  if (kind === "match") startMatch();
+  if (kind === "memory") startMemory();
+  gameTitle.focus();
+}
+
+function startMatch() {
+  const rounds = [];
+  const order = shuffle(currentTopic.words);
+  for (let index = 0; index < order.length; index += 6) {
+    rounds.push(order.slice(index, index + 6));
+  }
+  let round = 0;
+  let found = 0;
+  let busy = false;
+  let colorIndex = 0;
+  let selected = { en: null, fr: null };
+
+  gameTitle.textContent = "Match up";
+  gameHelp.textContent = "Choose an English word, then choose its French partner.";
+
+  function draw() {
+    found = 0;
+    colorIndex = 0;
+    selected = { en: null, fr: null };
+    const pairs = rounds[round];
+    gameScore.textContent = `Set ${round + 1} of ${rounds.length}`;
+    gameBoard.replaceChildren();
+    const board = document.createElement("div");
+    board.className = "match-board";
+    const english = document.createElement("div");
+    english.className = "match-col";
+    const french = document.createElement("div");
+    french.className = "match-col match-col-fr";
+    const englishLabel = document.createElement("p");
+    englishLabel.className = "column-label";
+    englishLabel.textContent = "English";
+    const frenchLabel = document.createElement("p");
+    frenchLabel.className = "column-label";
+    frenchLabel.textContent = "French";
+    english.append(englishLabel);
+    french.append(frenchLabel);
+
+    function check() {
+      if (!selected.en || !selected.fr) return;
+      const englishButton = selected.en;
+      const frenchButton = selected.fr;
+      selected = { en: null, fr: null };
+      if (englishButton.dataset.fr === frenchButton.dataset.fr) {
+        englishButton.classList.remove("is-selected");
+        frenchButton.classList.remove("is-selected");
+        englishButton.classList.add("is-matched", `pair-${colorIndex}`);
+        frenchButton.classList.add("is-matched", `pair-${colorIndex}`);
+        colorIndex += 1;
+        englishButton.disabled = true;
+        frenchButton.disabled = true;
+        found += 1;
+        gameStatus.textContent = `${englishButton.textContent} is ${frenchButton.textContent}`;
+        if (found === pairs.length) finishRound();
+        return;
+      }
+      busy = true;
+      englishButton.classList.add("is-wrong");
+      frenchButton.classList.add("is-wrong");
+      gameStatus.textContent = "Not a pair. Try again.";
+      window.setTimeout(() => {
+        englishButton.classList.remove("is-selected", "is-wrong");
+        frenchButton.classList.remove("is-selected", "is-wrong");
+        busy = false;
+      }, 550);
+    }
+
+    function choose(side, button) {
+      if (busy || button.disabled) return;
+      const previous = selected[side];
+      if (previous && previous !== button) previous.classList.remove("is-selected");
+      selected[side] = button;
+      button.classList.add("is-selected");
+      check();
+    }
+
+    shuffle(pairs).forEach(([en, fr]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "word-btn";
+      button.textContent = en;
+      button.dataset.fr = fr;
+      button.addEventListener("click", () => choose("en", button));
+      english.append(button);
+    });
+    shuffle(pairs).forEach(([, fr]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "word-btn";
+      button.textContent = fr;
+      button.dataset.fr = fr;
+      button.addEventListener("click", () => choose("fr", button));
+      french.append(button);
+    });
+
+    board.append(english, french);
+    gameBoard.append(board);
+  }
+
+  function finishRound() {
+    const note = document.createElement("p");
+    note.className = "result-line";
+    const again = document.createElement("button");
+    again.type = "button";
+    again.className = "next-round";
+    if (round < rounds.length - 1) {
+      note.textContent = "Set complete.";
+      again.textContent = "Next words";
+      again.addEventListener("click", () => {
+        round += 1;
+        draw();
+      });
+    } else {
+      note.textContent = `${currentTopic.done} ${awardStar()}`;
+      again.textContent = "Play again";
+      again.addEventListener("click", startMatch);
+    }
+    gameBoard.append(note, again);
+    gameStatus.textContent = note.textContent;
+  }
+
+  draw();
+}
+
+function nextMemoryPairs() {
+  const key = `${currentId || "pending"}:${currentTopic.id}`;
+  if (!progress.memorySeen) progress.memorySeen = {};
+  let seen = new Set(Array.isArray(progress.memorySeen[key]) ? progress.memorySeen[key] : []);
+  let pool = currentTopic.words.filter(([english]) => !seen.has(english));
+  if (pool.length === 0) {
+    seen = new Set();
+    pool = currentTopic.words.slice();
+  }
+  const pairs = shuffle(pool).slice(0, Math.min(6, pool.length));
+  pairs.forEach(([english]) => seen.add(english));
+  progress.memorySeen[key] = [...seen];
+  saveProgress();
+  return pairs;
+}
+
+function startMemory() {
+  const pairs = nextMemoryPairs();
+  const cards = shuffle(
+    pairs.flatMap(([en, fr], index) => [
+      { id: index, text: en, lang: "en" },
+      { id: index, text: fr, lang: "fr" },
+    ])
+  );
+  let first = null;
+  let lock = false;
+  let moves = 0;
+  let matched = 0;
+
+  gameTitle.textContent = "Memory";
+  gameHelp.textContent = "Turn over two cards. Find the English word and its French partner.";
+  gameScore.textContent = "0 moves";
+  gameBoard.replaceChildren();
+
+  const board = document.createElement("div");
+  board.className = "memory-board";
+
+  cards.forEach((card) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "memory-card is-down";
+    button.dataset.word = card.text;
+    button.setAttribute("aria-label", "Hidden card");
+    button.addEventListener("click", () => flip(button, card));
+    board.append(button);
+  });
+  gameBoard.append(board);
+
+  function flip(button, card) {
+    if (lock || button.disabled || !button.classList.contains("is-down")) return;
+    button.classList.remove("is-down");
+    button.classList.add(card.lang === "fr" ? "is-fr" : "is-en");
+    button.textContent = card.text;
+    button.setAttribute("aria-label", card.text);
+    if (!first) {
+      first = { button, card };
+      return;
+    }
+    moves += 1;
+    gameScore.textContent = `${moves} ${moves === 1 ? "move" : "moves"}`;
+    const previous = first;
+    first = null;
+    if (previous.card.id === card.id) {
+      previous.button.disabled = true;
+      button.disabled = true;
+      previous.button.classList.add("is-matched");
+      button.classList.add("is-matched");
+      matched += 1;
+      gameStatus.textContent = `${previous.card.text} matches ${card.text}`;
+      if (matched === pairs.length) finish();
+      return;
+    }
+    lock = true;
+    window.setTimeout(() => {
+      previous.button.classList.remove("is-en", "is-fr");
+      button.classList.remove("is-en", "is-fr");
+      previous.button.classList.add("is-down");
+      button.classList.add("is-down");
+      previous.button.textContent = "";
+      button.textContent = "";
+      previous.button.setAttribute("aria-label", "Hidden card");
+      button.setAttribute("aria-label", "Hidden card");
+      lock = false;
+    }, 800);
+  }
+
+  function finish() {
+    const note = document.createElement("p");
+    note.className = "result-line";
+    note.textContent = `All pairs found in ${moves} moves. ${awardStar()}`;
+    const again = document.createElement("button");
+    again.type = "button";
+    again.className = "next-round";
+    again.textContent = "New cards";
+    again.addEventListener("click", startMemory);
+    gameBoard.append(note, again);
+    gameStatus.textContent = note.textContent;
+  }
+}
+
+const LETTER_DICE = [
+  ["A", "E", "I", "O", "U", "A"],
+  ["A", "E", "I", "O", "U", "E"],
+  ["E", "I", "O", "U", "A", "I"],
+  ["A", "E", "O", "U", "Y", "A"],
+  ["A", "E", "I", "N", "R", "S"],
+  ["A", "E", "O", "T", "S", "R"],
+  ["A", "E", "I", "L", "N", "T"],
+  ["B", "C", "D", "M", "P", "T"],
+  ["C", "H", "L", "N", "R", "S"],
+  ["D", "G", "L", "N", "R", "T"],
+  ["F", "H", "M", "N", "S", "T"],
+  ["B", "C", "L", "P", "R", "S"],
+  ["B", "F", "G", "P", "V", "W"],
+  ["C", "D", "H", "M", "N", "R"],
+  ["H", "K", "L", "R", "S", "W"],
+  ["J", "K", "Q", "X", "Y", "Z"],
+];
+
+const BRITISH_WORDS = [
+  "coloured", "colouring", "colourful", "honour", "honours", "neighbour", "neighbours",
+  "theatres", "metre", "pyjamas", "travelled", "organise", "organising", "realise",
+  "realised", "recognise", "labelled", "flavour", "flavours", "humour", "rumour",
+  "cosy", "mum", "maths", "practise", "practised", "aeroplane", "aeroplanes",
+  "cheques", "tyre", "tyres", "kerb", "kerbs", "plough", "doughnut", "doughnuts", "jumper",
+];
+
+const SUGGESTION_SKIP = new Set([
+  "color", "colors", "colored", "coloring", "colorful",
+  "favorite", "favorites", "honor", "honors", "neighbor", "neighbors",
+  "gray", "theater", "theaters", "center", "centers", "jewelry", "pajamas",
+  "traveling", "traveled", "traveler", "organize", "organized", "organizing",
+  "realize", "realized", "recognize", "recognized", "canceled", "labeled",
+  "flavor", "flavors", "humor", "rumor", "cozy", "mom", "math", "airplane", "airplanes",
+]);
+
+const letterPlay = document.querySelector("#letter-play");
+const letterTitle = document.querySelector("#letter-title");
+const letterGrid = document.querySelector("#letter-grid");
+const letterShake = document.querySelector("#letter-shake");
+const letterTimer = document.querySelector("#letter-timer");
+const letterRows = document.querySelector("#letter-rows");
+const letterAdd = document.querySelector("#letter-add");
+const letterCheck = document.querySelector("#letter-check");
+const letterSuggest = document.querySelector("#letter-suggest");
+const letterSuggestions = document.querySelector("#letter-suggestions");
+const letterSuggestionList = document.querySelector("#letter-suggestion-list");
+const letterStatus = document.querySelector("#letter-status");
+
+const LETTER_FACES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const LETTER_ROW_COUNT = 12;
+const WORDS_PER_COLUMN = 12;
+const MAX_WORDS = 36;
+const ROUND_MS = 5 * 60 * 1000;
+
+let dictionaryReady = null;
+let dictionary = null;
+let englishReady = null;
+let englishWords = null;
+let currentLetters = [];
+let shaking = false;
+let roundToken = 0;
+let timerId = 0;
+let roundEndsAt = 0;
+const suggestedWords = new Set();
+
+function loadDictionary() {
+  if (!dictionaryReady) {
+    dictionaryReady = fetch("data/common-words.txt")
+      .then((response) => {
+        if (!response.ok) throw new Error("word list");
+        return response.text();
+      })
+      .then((text) => {
+        const words = new Map();
+        text.trim().split(/\s+/).forEach((word, index) => {
+          const clean = word.toLowerCase();
+          if (/^[a-z]+$/.test(clean) && !words.has(clean)) words.set(clean, index);
+        });
+        BRITISH_WORDS.forEach((word) => {
+          if (!words.has(word)) words.set(word, 1800);
+        });
+        dictionary = words;
+      });
+  }
+  return dictionaryReady;
+}
+
+function letterCounts(letters) {
+  const counts = {};
+  letters.forEach((letter) => {
+    const key = letter.toLowerCase();
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return counts;
+}
+
+function canSpell(word, counts) {
+  const used = {};
+  for (const letter of word) {
+    used[letter] = (used[letter] || 0) + 1;
+    if (used[letter] > (counts[letter] || 0)) return false;
+  }
+  return word.length > 0;
+}
+
+function readWord(value) {
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return { empty: true };
+  if (!/^[a-z]+(?:'[a-z]+)?$/.test(trimmed)) return { invalid: true };
+  return { letters: trimmed.replace(/'/g, ""), written: trimmed };
+}
+
+function formatClock(ms) {
+  const total = Math.ceil(ms / 1000);
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function setWritingEnabled(enabled) {
+  letterRows.querySelectorAll("input").forEach((input) => {
+    input.disabled = !enabled;
+  });
+  letterAdd.disabled = !enabled;
+}
+
+function setReviewEnabled(enabled) {
+  letterCheck.disabled = !enabled;
+  letterSuggest.disabled = !enabled;
+}
+
+function wordCount() {
+  return letterRows.querySelectorAll(".letter-row").length;
+}
+
+function ensureLetterColumn() {
+  const column = letterRows.lastElementChild;
+  if (column && column.querySelectorAll(".letter-row").length < WORDS_PER_COLUMN) return column;
+  const next = document.createElement("div");
+  next.className = "letter-column";
+  letterRows.append(next);
+  return next;
+}
+
+function addLetterRow() {
+  if (wordCount() >= MAX_WORDS) return null;
+  const column = ensureLetterColumn();
+  const row = document.createElement("label");
+  row.className = "letter-row";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.maxLength = 16;
+  input.autocomplete = "off";
+  input.autocapitalize = "none";
+  input.spellcheck = false;
+  const mark = document.createElement("span");
+  mark.className = "letter-mark";
+  row.append(input, mark);
+  column.append(row);
+  input.setAttribute("aria-label", `Word ${wordCount()}`);
+  input.addEventListener("input", () => {
+    mark.textContent = "";
+    mark.className = "letter-mark";
+    const inputs = [...letterRows.querySelectorAll("input")];
+    if (input === inputs[inputs.length - 1] && input.value.trim()) {
+      const added = addLetterRow();
+      if (added) added.disabled = input.disabled;
+    }
+  });
+  input.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    const inputs = [...letterRows.querySelectorAll("input")];
+    const next = inputs[inputs.indexOf(input) + 1];
+    if (next && !next.disabled) next.focus();
+    else {
+      const added = addLetterRow();
+      if (added) {
+        added.disabled = input.disabled;
+        if (!added.disabled) added.focus();
+      }
+    }
+  });
+  return input;
+}
+
+function resetLetterRows() {
+  letterRows.replaceChildren();
+  for (let index = 0; index < LETTER_ROW_COUNT; index += 1) addLetterRow();
+}
+
+function paintLetters(letters, landed) {
+  [...letterGrid.children].forEach((cube, index) => {
+    cube.textContent = letters[index] || "";
+    cube.classList.toggle("is-landed", landed);
+  });
+}
+
+function stopTimer() {
+  window.clearInterval(timerId);
+  timerId = 0;
+}
+
+function finishRound() {
+  stopTimer();
+  letterTimer.classList.remove("is-low");
+  letterTimer.classList.add("is-done");
+  letterTimer.textContent = "0:00";
+  setWritingEnabled(false);
+  letterStatus.textContent = "Time is up. Check your words, or shake the letters again.";
+}
+
+function tickTimer() {
+  const left = Math.max(0, roundEndsAt - Date.now());
+  letterTimer.textContent = formatClock(left);
+  letterTimer.classList.toggle("is-low", left > 0 && left <= 30000);
+  if (left <= 0) finishRound();
+}
+
+function startTimer() {
+  stopTimer();
+  roundEndsAt = Date.now() + ROUND_MS;
+  letterTimer.classList.remove("is-low", "is-done");
+  tickTimer();
+  timerId = window.setInterval(tickTimer, 200);
+}
+
+function buildGrid() {
+  letterGrid.replaceChildren();
+  for (let index = 0; index < 16; index += 1) {
+    const cube = document.createElement("div");
+    cube.className = `letter-cube tone-${index % 8}`;
+    cube.style.animationDelay = `${(index % 4) * 0.04}s`;
+    letterGrid.append(cube);
+  }
+}
+
+function showLetterPlay() {
+  vocabTopics.hidden = true;
+  vocabMenu.hidden = true;
+  vocabPlay.hidden = true;
+  letterPlay.hidden = false;
+  window.scrollTo(0, 0);
+  letterTitle.focus();
+}
+
+function loadEnglishWords() {
+  if (!englishReady) {
+    englishReady = fetch("data/english-words.txt")
+      .then((response) => {
+        if (!response.ok) throw new Error("english words");
+        return response.text();
+      })
+      .then((text) => {
+        const words = new Set();
+        text.split(/\s+/).forEach((word) => {
+          const clean = word.toLowerCase();
+          if (/^[a-z]+$/.test(clean)) words.add(clean);
+        });
+        englishWords = words;
+      });
+  }
+  return englishReady;
+}
+
+async function lookupEnglish(word) {
+  if ((dictionary && dictionary.has(word)) || (englishWords && englishWords.has(word))) return "yes";
+  try {
+    const response = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
+      { signal: AbortSignal.timeout(6000) }
+    );
+    if (response.ok) return "yes";
+    if (response.status === 404) return "no";
+    return "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+function spellableSuggestions() {
+  const counts = letterCounts(currentLetters);
+  const found = [];
+  dictionary.forEach((rank, word) => {
+    if (word.length < 3 || rank > 7000 || SUGGESTION_SKIP.has(word)) return;
+    if (!canSpell(word, counts)) return;
+    const lengthWeight = (8 - Math.min(word.length, 8)) * 350;
+    found.push({ word, score: rank + lengthWeight });
+  });
+  found.sort((a, b) => a.score - b.score || a.word.localeCompare(b.word));
+  return found.map((item) => item.word);
+}
+
+async function checkLetters() {
+  if (!currentLetters.length || shaking || letterCheck.disabled) return;
+  letterCheck.disabled = true;
+  letterStatus.textContent = "Checking your words…";
+  try {
+    await Promise.all([loadDictionary(), loadEnglishWords()]);
+  } catch {
+    dictionary = dictionary || new Map();
+    try {
+      await loadEnglishWords();
+    } catch {
+      englishWords = englishWords || new Set();
+    }
+  }
+  const counts = letterCounts(currentLetters);
+  const seen = new Set();
+  const jobs = [];
+  let correct = 0;
+  let missed = 0;
+  letterRows.querySelectorAll(".letter-row").forEach((row) => {
+    const input = row.querySelector("input");
+    const mark = row.querySelector(".letter-mark");
+    const word = readWord(input.value);
+    mark.className = "letter-mark";
+    if (word.empty) {
+      mark.textContent = "";
+      return;
+    }
+    if (word.invalid) {
+      mark.classList.add("is-no");
+      mark.textContent = "Use letters only.";
+      return;
+    }
+    if (seen.has(word.letters)) {
+      mark.classList.add("is-no");
+      mark.textContent = "Already written.";
+      return;
+    }
+    seen.add(word.letters);
+    if (!canSpell(word.letters, counts)) {
+      mark.classList.add("is-no");
+      mark.textContent = "Not in these letters.";
+      return;
+    }
+    mark.textContent = "Checking…";
+    jobs.push(
+      lookupEnglish(word.letters).then((result) => {
+        mark.className = "letter-mark";
+        if (result === "yes") {
+          correct += 1;
+          mark.classList.add("is-yes");
+          mark.textContent = "✓";
+        } else if (result === "no") {
+          mark.classList.add("is-no");
+          mark.textContent = "Not an English word.";
+        } else {
+          missed += 1;
+          mark.textContent = "Try again.";
+        }
+      })
+    );
+  });
+  await Promise.all(jobs);
+  if (!jobs.length && !letterRows.querySelector(".letter-mark.is-no")) {
+    letterStatus.textContent = "Write a word first.";
+  } else {
+    const total = correct === 1 ? "1 English word." : `${correct} English words.`;
+    letterStatus.textContent = missed ? `${total} ${missed} could not be checked.` : total;
+  }
+  letterCheck.disabled = false;
+}
+
+async function suggestLetters() {
+  if (!currentLetters.length || shaking) return;
+  letterSuggest.disabled = true;
+  try {
+    await loadDictionary();
+  } catch {
+    letterStatus.textContent = "The word list could not be loaded.";
+    letterSuggest.disabled = false;
+    return;
+  }
+  const typed = new Set();
+  letterRows.querySelectorAll("input").forEach((input) => {
+    const word = readWord(input.value);
+    if (word.letters) typed.add(word.letters);
+  });
+  const next = spellableSuggestions()
+    .filter((word) => !suggestedWords.has(word) && !typed.has(word))
+    .slice(0, 8);
+  if (!next.length) {
+    letterStatus.textContent = suggestedWords.size
+      ? "Those are the words I can suggest from these letters."
+      : "I cannot find more words from these letters.";
+    letterSuggest.disabled = false;
+    return;
+  }
+  next.forEach((word) => {
+    suggestedWords.add(word);
+    const item = document.createElement("li");
+    item.textContent = word;
+    letterSuggestionList.append(item);
+  });
+  letterSuggestions.hidden = false;
+  letterStatus.textContent = `Here are ${next.length} more words.`;
+  letterSuggest.disabled = false;
+}
+
+function shakeLetters() {
+  if (shaking) return;
+  shaking = true;
+  roundToken += 1;
+  const token = roundToken;
+  stopTimer();
+  currentLetters = shuffle(LETTER_DICE).map((die) => die[Math.floor(Math.random() * die.length)]);
+  suggestedWords.clear();
+  letterSuggestionList.replaceChildren();
+  letterSuggestions.hidden = true;
+  letterStatus.textContent = "Shaking…";
+  letterTimer.classList.remove("is-low", "is-done");
+  letterTimer.textContent = "5:00";
+  resetLetterRows();
+  setWritingEnabled(false);
+  setReviewEnabled(false);
+  letterShake.disabled = true;
+  letterGrid.classList.add("is-shaking");
+  letterGrid.setAttribute("aria-busy", "true");
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reveal = () => {
+    if (token !== roundToken) return;
+    letterGrid.classList.remove("is-shaking");
+    letterGrid.setAttribute("aria-busy", "false");
+    paintLetters(currentLetters, !reduced);
+    letterGrid.setAttribute("aria-label", `Letters: ${currentLetters.join(", ")}`);
+    shaking = false;
+    letterShake.disabled = false;
+    letterShake.textContent = "Shake again";
+    setWritingEnabled(true);
+    setReviewEnabled(true);
+    letterStatus.textContent = "The letters have landed. Five minutes starts now.";
+    startTimer();
+    const first = letterRows.querySelector("input");
+    if (first) first.focus();
+  };
+
+  if (reduced) {
+    reveal();
+    return;
+  }
+
+  const flicker = window.setInterval(() => {
+    if (token !== roundToken) {
+      window.clearInterval(flicker);
+      return;
+    }
+    paintLetters(
+      currentLetters.map(() => LETTER_FACES[Math.floor(Math.random() * LETTER_FACES.length)]),
+      false
+    );
+  }, 80);
+  window.setTimeout(() => {
+    window.clearInterval(flicker);
+    reveal();
+  }, 1600);
+}
+
+buildGrid();
+resetLetterRows();
+setWritingEnabled(false);
+setReviewEnabled(false);
+loadDictionary().catch(() => {});
+loadEnglishWords().catch(() => {});
+
+document.querySelector("#open-letters").addEventListener("click", showLetterPlay);
+document.querySelector("#letter-back").addEventListener("click", showVocabTopics);
+letterShake.addEventListener("click", shakeLetters);
+letterAdd.addEventListener("click", () => {
+  if (wordCount() >= MAX_WORDS) return;
+  addLetterRow().focus();
+});
+letterCheck.addEventListener("click", () => {
+  checkLetters();
+});
+letterSuggest.addEventListener("click", () => {
+  suggestLetters();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (location.hash !== "#vocabulary" || event.target.closest(".user-menu")) return;
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  if (!letterPlay.hidden) showVocabTopics();
+  else if (!vocabPlay.hidden) showTopicMenu();
+  else if (!vocabMenu.hidden) showVocabTopics();
+  else location.hash = "#home";
+});
+
+const grammarTopics = document.querySelector("#grammar-topics");
+const grammarLesson = document.querySelector("#grammar-lesson");
+const grammarTitle = document.querySelector("#grammar-title");
+const grammarLessonTitle = document.querySelector("#grammar-lesson-title");
+const grammarEyebrow = document.querySelector("#grammar-eyebrow");
+const grammarExplain = document.querySelector("#grammar-explain");
+const grammarExercises = document.querySelector("#grammar-exercises");
+const grammarCheck = document.querySelector("#grammar-check");
+const grammarResult = document.querySelector("#grammar-result");
+
+const grammarLessons = {
+  simple: {
+    id: "simple",
+    title: "Present simple",
+    sections: [
+      {
+        heading: "When do we use it?",
+        paragraphs: ["We use the present simple for things we do again and again, and for things that are true."],
+        examples: ["I walk to school every day.", "She likes cats.", "The shop opens at nine."],
+      },
+      {
+        heading: "The verb to be",
+        forms: ["I am", "You are", "He is", "She is", "It is", "We are", "They are"],
+        examples: ["I am not tired.", "She is not here.", "Are they ready?"],
+      },
+      {
+        heading: "Other verbs",
+        paragraphs: [
+          "After I, you, we, and they, use the verb. I play. They live.",
+          "After he, she, and it, add s. He plays. She lives.",
+          "Some verbs change a little: watch → watches, go → goes, study → studies.",
+          "For the negative, use do not (don't) or does not (doesn't). For a question, use do or does.",
+        ],
+        examples: ["I don't play tennis.", "She doesn't like peas.", "Do you speak French?", "Does he walk to school?"],
+      },
+    ],
+    groups: [
+      {
+        title: "Exercise 1. The verb to be",
+        starId: "simple-be",
+        note: "Write am, is, or are.",
+        items: [
+          { pieces: ["I ", { answers: ["am"] }, " a student."] },
+          { pieces: ["She ", { answers: ["is"] }, " my best friend."] },
+          { pieces: ["They ", { answers: ["are"] }, " in the classroom."] },
+          { pieces: ["We ", { answers: ["are"] }, " not hungry."] },
+          { pieces: [{ answers: ["are"] }, " you ready?"] },
+          { pieces: ["He ", { answers: ["is"] }, " not at home."] },
+        ],
+      },
+      {
+        title: "Exercise 2. Other verbs",
+        starId: "simple-verbs",
+        note: "Write the verb in the present simple. The word in brackets helps you.",
+        items: [
+          { hint: "live", pieces: ["I ", { answers: ["live"] }, " in London."] },
+          { hint: "play", pieces: ["She ", { answers: ["plays"] }, " tennis on Fridays."] },
+          { hint: "watch", pieces: ["We ", { answers: ["watch"] }, " TV after school."] },
+          { hint: "go", pieces: ["He ", { answers: ["goes"] }, " to school by bus."] },
+          { hint: "study", pieces: ["Anna ", { answers: ["studies"] }, " English every day."] },
+          { hint: "not / like", pieces: ["They ", { answers: ["don't like", "do not like"] }, " fish."] },
+          { hint: "not / get", pieces: ["My sister ", { answers: ["doesn't get", "does not get"] }, " up at seven."] },
+          {
+            hint: "speak",
+            pieces: [{ answers: ["do"] }, " you ", { answers: ["speak"] }, " Spanish?"],
+          },
+        ],
+      },
+    ],
+  },
+  continuous: {
+    id: "continuous",
+    title: "Present continuous",
+    sections: [
+      {
+        heading: "When do we use it?",
+        paragraphs: ["We use the present continuous for something happening now."],
+        examples: ["I am reading now.", "They are playing football at the moment."],
+      },
+      {
+        heading: "How to make it",
+        paragraphs: ["Use am, is, or are, then a verb ending in -ing."],
+        forms: ["I am eating", "She is eating", "They are eating"],
+        examples: ["I am not eating.", "Is she eating?", "Are they eating?"],
+      },
+      {
+        heading: "Spelling",
+        paragraphs: ["Most verbs just add -ing. A few change a little."],
+        examples: ["play → playing", "make → making", "run → running"],
+      },
+    ],
+    groups: [
+      {
+        title: "am, is, or are",
+        note: "Write am, is, or are.",
+        items: [
+          { pieces: ["I ", { answers: ["am"] }, " talking to you now."] },
+          { pieces: ["She ", { answers: ["is"] }, " sitting next to me."] },
+          { pieces: ["They ", { answers: ["are"] }, " playing a game."] },
+          { pieces: ["We ", { answers: ["are"] }, " not sleeping."] },
+          { pieces: [{ answers: ["is"] }, " he listening?"] },
+        ],
+      },
+      {
+        title: "The whole verb",
+        note: "Write am, is, or are, and the verb with -ing.",
+        items: [
+          { hint: "write", pieces: ["I ", { answers: ["am writing"] }, " a letter at the moment."] },
+          { hint: "make", pieces: ["She ", { answers: ["is making"] }, " a cake now."] },
+          { hint: "run", pieces: ["The children ", { answers: ["are running"] }, " in the park."] },
+          {
+            hint: "not / work",
+            pieces: ["He ", { answers: ["isn't working", "is not working"] }, " today."],
+          },
+          { hint: "study", pieces: ["We ", { answers: ["are studying"] }, " for the test today."] },
+          {
+            hint: "listen",
+            pieces: [{ answers: ["are"] }, " you ", { answers: ["listening"] }, " to music?"],
+          },
+        ],
+      },
+    ],
+  },
+  contrast: {
+    id: "contrast",
+    title: "Present simple versus present continuous",
+    sections: [
+      {
+        heading: "How are they different?",
+        paragraphs: [
+          "Present simple is for habits and things that are always true. Words like every day, usually, often, and always go with the present simple.",
+          "Present continuous is for actions happening now. Words like now, right now, at the moment, and today go with the present continuous.",
+        ],
+        pairs: [
+          { simple: "I drink milk every morning.", continuous: "I am drinking milk now." },
+          { simple: "She walks to school.", continuous: "Look! She is walking to school." },
+        ],
+      },
+      {
+        heading: "A small extra rule",
+        paragraphs: ["We usually use the present simple, not the present continuous, with like, love, want, and know."],
+        examples: ["I like this song."],
+      },
+    ],
+    groups: [
+      {
+        title: "Which tense is it?",
+        note: "Write the verb in the present simple or the present continuous.",
+        items: [
+          { hint: "walk", pieces: ["She ", { answers: ["walks"] }, " to school every day."] },
+          { hint: "walk", pieces: ["She ", { answers: ["is walking"] }, " to school now."] },
+          { hint: "drink", pieces: ["I usually ", { answers: ["drink"] }, " tea."] },
+          { hint: "drink", pieces: ["I ", { answers: ["am drinking"] }, " tea at the moment."] },
+          { hint: "sing", pieces: ["Listen! The birds ", { answers: ["are singing"] }, "."] },
+          { hint: "not / like", pieces: ["He ", { answers: ["doesn't like", "does not like"] }, " milk."] },
+          { hint: "play", pieces: ["They ", { answers: ["play"] }, " football on Saturdays."] },
+          { hint: "play", pieces: ["They ", { answers: ["are playing"] }, " football now."] },
+        ],
+      },
+    ],
+  },
+};
+
+let currentGrammarId = "";
+
+function showGrammarTopics() {
+  grammarLesson.hidden = true;
+  grammarTopics.hidden = false;
+  window.scrollTo(0, 0);
+  grammarTitle.focus();
+}
+
+function tidyAnswer(value) {
+  return value.trim().toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, " ");
+}
+
+function sameAnswer(value, expected) {
+  const given = tidyAnswer(value);
+  const wanted = tidyAnswer(expected);
+  return given === wanted || given.replace(/'/g, "") === wanted.replace(/'/g, "");
+}
+
+function tenseCard(label, sentence, tone) {
+  const card = document.createElement("div");
+  card.className = `tense-card ${tone}`;
+  const name = document.createElement("span");
+  name.className = "tense-label";
+  name.textContent = label;
+  const line = document.createElement("p");
+  line.textContent = sentence;
+  card.append(name, line);
+  return card;
+}
+
+function renderExercise(item, number) {
+  const row = document.createElement("li");
+  row.className = "exercise-item";
+  const count = document.createElement("span");
+  count.className = "exercise-number";
+  count.textContent = `${number}.`;
+  row.append(count);
+  item.pieces.forEach((piece) => {
+    if (typeof piece === "string") {
+      row.append(document.createTextNode(piece));
+      return;
+    }
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "gap-input";
+    input.autocomplete = "off";
+    input.autocapitalize = "none";
+    input.spellcheck = false;
+    input.setAttribute("aria-label", `Answer ${number}`);
+    input.dataset.answers = piece.answers.join("|");
+    const longest = piece.answers.reduce((max, answer) => Math.max(max, answer.length), 0);
+    if (longest <= 4) input.classList.add("is-short");
+    else input.style.width = `${Math.min(14, Math.max(8.5, longest * 0.62))}rem`;
+    input.addEventListener("input", () => {
+      input.classList.remove("is-right", "is-wrong");
+      row.querySelector(".exercise-mark").textContent = "";
+      const nearby = row.closest(".exercise-group")?.querySelector(".result-line");
+      if (nearby) nearby.textContent = "";
+      grammarResult.textContent = "";
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      const group = row.closest(".exercise-group");
+      const inputs = [...(group?.querySelectorAll(".gap-input") || grammarExercises.querySelectorAll(".gap-input"))];
+      const next = inputs[inputs.indexOf(input) + 1];
+      if (next) next.focus();
+      else (group?.querySelector(".next-round") || grammarCheck).focus();
+    });
+    row.append(input);
+  });
+  if (item.hint) {
+    const hint = document.createElement("span");
+    hint.className = "exercise-hint";
+    hint.textContent = `(${item.hint})`;
+    row.append(hint);
+  }
+  const mark = document.createElement("span");
+  mark.className = "exercise-mark";
+  row.append(mark);
+  return row;
+}
+
+function openGrammarLesson(id) {
+  const lesson = grammarLessons[id];
+  currentGrammarId = lesson.id;
+  grammarTopics.hidden = true;
+  grammarLesson.hidden = false;
+  grammarEyebrow.textContent = "Grammar";
+  grammarLessonTitle.textContent = lesson.title;
+  grammarResult.textContent = "";
+  grammarExplain.replaceChildren();
+  grammarExercises.replaceChildren();
+  const separateStars = lesson.groups.some((group) => group.starId);
+  grammarCheck.hidden = separateStars;
+  grammarResult.hidden = separateStars;
+
+  const explanation = document.createElement("div");
+  explanation.className = "grammar-explain";
+  lesson.sections.forEach((section) => {
+    const heading = document.createElement("h2");
+    heading.textContent = section.heading;
+    explanation.append(heading);
+    (section.paragraphs || []).forEach((text) => {
+      const paragraph = document.createElement("p");
+      paragraph.textContent = text;
+      explanation.append(paragraph);
+    });
+    if (section.forms) {
+      const forms = document.createElement("ul");
+      forms.className = "grammar-forms";
+      section.forms.forEach((form) => {
+        const item = document.createElement("li");
+        item.textContent = form;
+        forms.append(item);
+      });
+      explanation.append(forms);
+    }
+    if (section.examples) {
+      const examples = document.createElement("ul");
+      examples.className = "grammar-examples";
+      section.examples.forEach((example) => {
+        const item = document.createElement("li");
+        item.textContent = example;
+        examples.append(item);
+      });
+      explanation.append(examples);
+    }
+    (section.pairs || []).forEach((pair) => {
+      const grid = document.createElement("div");
+      grid.className = "tense-pairs";
+      grid.append(tenseCard("Present simple", pair.simple, "simple"));
+      grid.append(tenseCard("Present continuous", pair.continuous, "now"));
+      explanation.append(grid);
+    });
+  });
+  grammarExplain.append(explanation);
+
+  let number = 0;
+  lesson.groups.forEach((group) => {
+    const block = document.createElement("section");
+    block.className = "exercise-group";
+    const heading = document.createElement("h2");
+    heading.textContent = group.title;
+    const note = document.createElement("p");
+    note.className = "exercise-note";
+    note.textContent = group.note;
+    const list = document.createElement("ol");
+    list.className = "exercise-list";
+    if (group.starId) number = 0;
+    group.items.forEach((item) => {
+      number += 1;
+      list.append(renderExercise(item, number));
+    });
+    block.append(heading, note, list);
+    if (group.starId) {
+      const check = document.createElement("button");
+      check.type = "button";
+      check.className = "next-round";
+      check.textContent = "Check answers";
+      const result = document.createElement("p");
+      result.className = "result-line";
+      result.setAttribute("aria-live", "polite");
+      check.addEventListener("click", () => checkExercise(block, group.starId, result));
+      block.append(check, result);
+    }
+    grammarExercises.append(block);
+  });
+
+  window.scrollTo(0, 0);
+  grammarLessonTitle.focus();
+}
+
+function awardGrammarStar(lessonId) {
+  const id = currentId || "pending";
+  if (!progress.grammarDone) progress.grammarDone = {};
+  const done = new Set(Array.isArray(progress.grammarDone[id]) ? progress.grammarDone[id] : []);
+  if (done.has(lessonId)) return "You already have this star.";
+  done.add(lessonId);
+  progress.grammarDone[id] = [...done];
+  saveProgress();
+  return awardStar();
+}
+
+function markExercise(block) {
+  const items = [...block.querySelectorAll(".exercise-item")];
+  let correct = 0;
+  items.forEach((item) => {
+    const inputs = [...item.querySelectorAll(".gap-input")];
+    const allRight = inputs.every((input) => {
+      const answers = input.dataset.answers.split("|");
+      const right = answers.some((answer) => sameAnswer(input.value, answer));
+      input.classList.toggle("is-right", right);
+      input.classList.toggle("is-wrong", !right);
+      return right;
+    });
+    item.querySelector(".exercise-mark").textContent = allRight ? "✓" : "";
+    if (allRight) correct += 1;
+  });
+  return { correct, total: items.length };
+}
+
+function checkExercise(block, starId, result) {
+  const score = markExercise(block);
+  if (score.correct === score.total) {
+    result.textContent = `All ${score.total} answers are correct. ${awardGrammarStar(starId)}`;
+    return;
+  }
+  result.textContent = `${score.correct} of ${score.total} correct. Look again at the pink boxes.`;
+}
+
+function checkGrammar() {
+  const score = markExercise(grammarExercises);
+  if (score.correct === score.total) {
+    grammarResult.textContent = `All ${score.total} answers are correct. ${awardGrammarStar(currentGrammarId)}`;
+    return;
+  }
+  grammarResult.textContent = `${score.correct} of ${score.total} correct. Look again at the pink boxes.`;
+}
+
+document.querySelectorAll("[data-lesson]").forEach((choice) => {
+  choice.addEventListener("click", () => openGrammarLesson(choice.dataset.lesson));
+});
+document.querySelector("#grammar-back").addEventListener("click", showGrammarTopics);
+grammarCheck.addEventListener("click", checkGrammar);
+
+document.addEventListener("keydown", (event) => {
+  if (location.hash !== "#grammar" || event.target.closest(".user-menu")) return;
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  if (!grammarLesson.hidden) showGrammarTopics();
+  else location.hash = "#home";
+});
