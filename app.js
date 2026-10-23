@@ -22,7 +22,7 @@ function loadProgress() {
   try {
     const saved = JSON.parse(localStorage.getItem(progressKey));
     if (!saved || typeof saved !== "object") {
-      return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, listeningDone: {}, writing: {} };
+      return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, listeningDone: {}, readingDone: {}, writingDone: {}, letterWords: {}, writing: {} };
     }
     return {
       user: typeof saved.user === "string" ? saved.user : "",
@@ -32,10 +32,13 @@ function loadProgress() {
       memorySeen: saved.memorySeen && typeof saved.memorySeen === "object" ? saved.memorySeen : {},
       grammarDone: saved.grammarDone && typeof saved.grammarDone === "object" ? saved.grammarDone : {},
       listeningDone: saved.listeningDone && typeof saved.listeningDone === "object" ? saved.listeningDone : {},
+      readingDone: saved.readingDone && typeof saved.readingDone === "object" ? saved.readingDone : {},
+      writingDone: saved.writingDone && typeof saved.writingDone === "object" ? saved.writingDone : {},
+      letterWords: saved.letterWords && typeof saved.letterWords === "object" ? saved.letterWords : {},
       writing: saved.writing && typeof saved.writing === "object" ? saved.writing : {},
     };
   } catch {
-    return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, listeningDone: {}, writing: {} };
+    return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, listeningDone: {}, readingDone: {}, writingDone: {}, letterWords: {}, writing: {} };
   }
 }
 
@@ -60,9 +63,18 @@ function pictureStars(id) {
   return Math.min(2, Math.floor(pictureDoneList(id).length / 5));
 }
 
+function letterWordCount(id) {
+  const count = progress.letterWords && progress.letterWords[id];
+  return Number.isInteger(count) && count > 0 ? count : 0;
+}
+
+function letterStars(id) {
+  return Math.floor(letterWordCount(id) / 10);
+}
+
 function totalStars(id) {
   if (!id) return 0;
-  return (progress.stars[id] || 0) + pictureStars(id);
+  return (progress.stars[id] || 0) + pictureStars(id) + letterStars(id);
 }
 
 const starCardRules = {
@@ -79,6 +91,11 @@ const starCardRules = {
   past: { grammar: ["past-match", "past-gaps"] },
   landmarks: { listening: ["landmarks"] },
   people: { listening: ["people"] },
+  letters: { letters: true },
+  plastic: { reading: ["plastic"] },
+  potter: { reading: ["potter"] },
+  intro: { writing: ["intro"] },
+  "photo-writing": { writing: ["photo-writing"] },
 };
 
 function savedIds(store, id) {
@@ -91,8 +108,10 @@ function starCardState(activity) {
   if (!rule) return null;
   const owner = currentId || "pending";
   if (rule.pictures) return { won: pictureStars(owner), total: 2 };
-  const ids = rule.grammar || rule.listening;
-  const done = savedIds(rule.grammar ? "grammarDone" : "listeningDone", owner);
+  if (rule.letters) return { won: letterStars(owner), total: Infinity };
+  const store = rule.grammar ? "grammarDone" : rule.reading ? "readingDone" : rule.writing ? "writingDone" : "listeningDone";
+  const ids = rule.grammar || rule.reading || rule.writing || rule.listening;
+  const done = savedIds(store, owner);
   return { won: ids.filter((item) => done.has(item)).length, total: ids.length };
 }
 
@@ -101,6 +120,10 @@ function starCardMessage(activity, won, total) {
     if (won <= 0) return "Win 2 stars";
     if (won === 1) return "You have won 1 star";
     return "✓ Completed. You have won 2 stars.";
+  }
+  if (activity === "letters") {
+    if (won <= 0) return "Win unlimited stars";
+    return won === 1 ? "You have won 1 star" : `You have won ${won} stars`;
   }
   if (won >= total) {
     return total === 1
@@ -131,6 +154,8 @@ function renderStars() {
   });
   refreshStarCards();
   updatePictureProgress();
+  updateLetterProgress();
+  updateWritingDoneButtons();
   if (!currentId) return;
   const count = totalStars(currentId);
   starCount.textContent = `★ ${count}`;
@@ -187,6 +212,30 @@ function claimPending(id) {
     ]);
     progress.listeningDone[id] = [...mergedListening];
     delete progress.listeningDone.pending;
+  }
+  if (!progress.readingDone) progress.readingDone = {};
+  if (Array.isArray(progress.readingDone.pending) && progress.readingDone.pending.length) {
+    const mergedReading = new Set([
+      ...(Array.isArray(progress.readingDone[id]) ? progress.readingDone[id] : []),
+      ...progress.readingDone.pending,
+    ]);
+    progress.readingDone[id] = [...mergedReading];
+    delete progress.readingDone.pending;
+  }
+  if (!progress.writingDone) progress.writingDone = {};
+  if (Array.isArray(progress.writingDone.pending) && progress.writingDone.pending.length) {
+    const mergedWriting = new Set([
+      ...(Array.isArray(progress.writingDone[id]) ? progress.writingDone[id] : []),
+      ...progress.writingDone.pending,
+    ]);
+    progress.writingDone[id] = [...mergedWriting];
+    delete progress.writingDone.pending;
+  }
+  if (!progress.letterWords) progress.letterWords = {};
+  const pendingLetterWords = letterWordCount("pending");
+  if (pendingLetterWords) {
+    progress.letterWords[id] = letterWordCount(id) + pendingLetterWords;
+    delete progress.letterWords.pending;
   }
   Object.keys(progress.memorySeen).forEach((key) => {
     if (!key.startsWith("pending:")) return;
@@ -554,6 +603,31 @@ function updatePictureProgress() {
     return;
   }
   line.textContent = `You have won 1 star. Describe five more pictures to win another. ${towardsNext} of 5 ticked.`;
+}
+
+function updateLetterProgress() {
+  const line = document.querySelector("#letter-progress");
+  if (!line) return;
+  const key = currentId || "pending";
+  const words = letterWordCount(key);
+  const stars = letterStars(key);
+  const towardsNext = words % 10;
+  if (stars === 0) {
+    line.textContent = `You need ten English words to win one star. ${towardsNext} of 10 words.`;
+    return;
+  }
+  const won = stars === 1 ? "You have won 1 star." : `You have won ${stars} stars.`;
+  line.textContent = `${won} ${towardsNext} of 10 words towards the next star.`;
+}
+
+function updateWritingDoneButtons() {
+  const done = savedIds("writingDone", currentId || "pending");
+  document.querySelectorAll("[data-writing-done]").forEach((button) => {
+    const marked = done.has(button.dataset.writingDone);
+    button.classList.toggle("is-done", marked);
+    button.setAttribute("aria-pressed", String(marked));
+    button.textContent = marked ? "✓ Marked as done" : "Mark as done";
+  });
 }
 
 function togglePictureDone() {
@@ -1113,6 +1187,7 @@ let roundToken = 0;
 let timerId = 0;
 let roundEndsAt = 0;
 const suggestedWords = new Set();
+const creditedLetters = new Set();
 
 function loadDictionary() {
   if (!dictionaryReady) {
@@ -1361,6 +1436,9 @@ async function checkLetters() {
   const jobs = [];
   let correct = 0;
   let missed = 0;
+  let added = 0;
+  const owner = currentId || "pending";
+  const beforeStars = letterStars(owner);
   letterRows.querySelectorAll(".letter-row").forEach((row) => {
     const input = row.querySelector("input");
     const mark = row.querySelector(".letter-mark");
@@ -1392,6 +1470,10 @@ async function checkLetters() {
         mark.className = "letter-mark";
         if (result === "yes") {
           correct += 1;
+          if (!creditedLetters.has(word.letters)) {
+            creditedLetters.add(word.letters);
+            added += 1;
+          }
           mark.classList.add("is-yes");
           mark.textContent = "✓";
         } else if (result === "no") {
@@ -1405,11 +1487,26 @@ async function checkLetters() {
     );
   });
   await Promise.all(jobs);
+  if (added) {
+    if (!progress.letterWords) progress.letterWords = {};
+    progress.letterWords[owner] = letterWordCount(owner) + added;
+    saveProgress();
+    renderStars();
+  }
+  const afterStars = letterStars(owner);
+  let starNote = "";
+  if (afterStars > beforeStars) {
+    const gained = afterStars - beforeStars;
+    const earned = gained === 1 ? "You earned a star." : `You earned ${gained} stars.`;
+    const won = afterStars === 1 ? "You have won 1 star." : `You have won ${afterStars} stars.`;
+    starNote = currentId ? ` ${earned} ${won}` : " Choose your name to keep this star.";
+  }
   if (!jobs.length && !letterRows.querySelector(".letter-mark.is-no")) {
     letterStatus.textContent = "Write a word first.";
   } else {
     const total = correct === 1 ? "1 English word." : `${correct} English words.`;
-    letterStatus.textContent = missed ? `${total} ${missed} could not be checked.` : total;
+    const checked = missed ? `${total} ${missed} could not be checked.` : total;
+    letterStatus.textContent = `${checked}${starNote}`;
   }
   letterCheck.disabled = false;
 }
@@ -1458,6 +1555,7 @@ function shakeLetters() {
   stopTimer();
   currentLetters = shuffle(LETTER_DICE).map((die) => die[Math.floor(Math.random() * die.length)]);
   suggestedWords.clear();
+  creditedLetters.clear();
   letterSuggestionList.replaceChildren();
   letterSuggestions.hidden = true;
   letterStatus.textContent = "Shaking…";
@@ -2144,15 +2242,27 @@ function checkLandmarks() {
   landmarkResult.textContent = `${correct} of ${items.length} correct.`;
 }
 
-function awardListeningStar(activityId) {
+function awardStoredStar(store, activityId) {
   const id = currentId || "pending";
-  if (!progress.listeningDone) progress.listeningDone = {};
-  const done = new Set(Array.isArray(progress.listeningDone[id]) ? progress.listeningDone[id] : []);
+  if (!progress[store]) progress[store] = {};
+  const done = new Set(Array.isArray(progress[store][id]) ? progress[store][id] : []);
   if (done.has(activityId)) return "You already have this star.";
   done.add(activityId);
-  progress.listeningDone[id] = [...done];
+  progress[store][id] = [...done];
   saveProgress();
   return awardStar();
+}
+
+function awardListeningStar(activityId) {
+  return awardStoredStar("listeningDone", activityId);
+}
+
+function awardReadingStar(activityId) {
+  return awardStoredStar("readingDone", activityId);
+}
+
+function awardWritingStar(activityId) {
+  return awardStoredStar("writingDone", activityId);
 }
 
 document.querySelector("#open-landmarks").addEventListener("click", showLandmarks);
@@ -2362,6 +2472,9 @@ function showWritingFromStore() {
   photoTexts.forEach((box, index) => {
     box.value = photos[index] || "";
   });
+  document.querySelectorAll("[data-writing-status]").forEach((note) => {
+    note.textContent = "";
+  });
 }
 
 function showWritingTopics() {
@@ -2417,6 +2530,26 @@ function readingWord(value) {
   return tidyAnswer(value).replace(/^(a|an|the)\s+/, "");
 }
 
+function readingScores(panel) {
+  const wordItems = [...panel.querySelectorAll(".word-hunt .word-item")];
+  const wordsCorrect = wordItems.filter((item) => {
+    const input = item.querySelector("input");
+    const answers = input.dataset.answers.split("|");
+    return answers.some((answer) => readingWord(input.value) === tidyAnswer(answer));
+  }).length;
+  const quizItems = [...panel.querySelectorAll(".reading-quiz .quiz-item")];
+  const quizCorrect = quizItems.filter((item) => {
+    const chosen = item.querySelector("input:checked");
+    return chosen && chosen.value === item.dataset.answer;
+  }).length;
+  return {
+    wordsCorrect,
+    wordsTotal: wordItems.length,
+    quizCorrect,
+    quizTotal: quizItems.length,
+  };
+}
+
 function checkReadingWords(block) {
   const items = [...block.querySelectorAll(".word-item")];
   let correct = 0;
@@ -2428,10 +2561,16 @@ function checkReadingWords(block) {
     input.classList.toggle("is-wrong", !right);
     if (right) correct += 1;
   });
+  const panel = block.closest("[data-reading]");
+  const scores = readingScores(panel);
   const result = block.querySelector(".word-result");
-  result.textContent = correct === items.length
-    ? `All ${items.length} words are correct.`
-    : `${correct} of ${items.length} correct. Look again at the pink boxes.`;
+  if (correct === items.length && scores.quizCorrect === scores.quizTotal) {
+    result.textContent = `All ${items.length} words are correct. ${awardReadingStar(panel.dataset.reading)}`;
+  } else if (correct === items.length) {
+    result.textContent = `All ${items.length} words are correct. Answer every question correctly to win the star.`;
+  } else {
+    result.textContent = `${correct} of ${items.length} correct. Look again at the pink boxes.`;
+  }
 }
 
 function checkReadingQuiz(block) {
@@ -2445,7 +2584,16 @@ function checkReadingQuiz(block) {
     if (chosen && chosen.value === item.dataset.answer) correct += 1;
     else if (chosen) chosen.closest("label").classList.add("is-wrong");
   });
-  block.querySelector(".quiz-result").textContent = `${correct} of ${items.length} correct.`;
+  const panel = block.closest("[data-reading]");
+  const scores = readingScores(panel);
+  const result = block.querySelector(".quiz-result");
+  if (correct === items.length && scores.wordsCorrect === scores.wordsTotal) {
+    result.textContent = `${correct} of ${items.length} correct. ${awardReadingStar(panel.dataset.reading)}`;
+  } else if (correct === items.length) {
+    result.textContent = `${correct} of ${items.length} correct. Find every word to win the star.`;
+  } else {
+    result.textContent = `${correct} of ${items.length} correct.`;
+  }
 }
 
 function showReadingTopics() {
@@ -2484,6 +2632,15 @@ document.querySelectorAll(".word-item input").forEach((input) => {
 document.querySelectorAll(".reading-quiz").forEach((quiz) => {
   quiz.addEventListener("change", () => {
     quiz.querySelector(".quiz-result").textContent = "";
+  });
+});
+document.querySelectorAll("[data-writing-done]").forEach((button) => {
+  button.addEventListener("click", () => {
+    saveWritingFromPage();
+    const activityId = button.dataset.writingDone;
+    const note = document.querySelector(`[data-writing-status="${activityId}"]`);
+    const message = awardWritingStar(activityId);
+    if (note) note.textContent = message;
   });
 });
 

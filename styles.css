@@ -589,9 +589,14 @@ body:has(#reading:target) .card-grid {
   box-shadow: 0 4px 0 rgba(42, 24, 72, 0.1);
 }
 
-#picture-done.is-done {
+#picture-done.is-done,
+.writing-done.is-done {
   background: #178a4a;
   color: white;
+}
+
+.writing-done {
+  margin-top: 0.85rem;
 }
 
 .tool-button.is-recording {

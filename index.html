@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=31" />
+    <link rel="stylesheet" href="styles.css?v=32" />
   </head>
   <body>
     <header class="site-header">
@@ -232,6 +232,7 @@
             <button type="button" class="game-choice game-choice-letters" id="open-letters">
               <span class="game-name">Letter Shake</span>
               <span class="game-blurb">Shake sixteen letters and write the words you can make.</span>
+              <span class="game-stars" data-activity="letters"></span>
             </button>
           </div>
         </div>
@@ -282,6 +283,7 @@
           <p class="eyebrow">Vocabulary · Letter Shake</p>
           <h1 id="letter-title" tabindex="-1">Letter Shake</h1>
           <p class="prompt" id="letter-help">Shake the letters. When they land, you have five minutes to write English words using the letters you can see. You can use a letter again only if it is showing more than once.</p>
+          <p class="picture-progress" id="letter-progress">You need ten English words to win one star.</p>
           <div class="letter-stage">
             <div class="letter-box">
               <div class="letter-grid" id="letter-grid" aria-label="Letter cubes"></div>
@@ -318,14 +320,16 @@
             <button type="button" class="game-choice game-choice-plastic" id="open-plastic">
               <span class="game-name">Plastic Pollution</span>
               <span class="game-blurb">Read about plastic in the sea, then answer the questions.</span>
+              <span class="game-stars" data-activity="plastic"></span>
             </button>
             <button type="button" class="game-choice game-choice-potter" id="open-potter">
               <span class="game-name">Harry Potter</span>
               <span class="game-blurb">Read about Harry, then answer the questions.</span>
+              <span class="game-stars" data-activity="potter"></span>
             </button>
           </div>
         </div>
-        <div id="reading-plastic" hidden>
+        <div id="reading-plastic" data-reading="plastic" hidden>
           <button type="button" class="back-button reading-back" aria-label="Back to Reading">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
@@ -334,7 +338,7 @@
           </button>
           <p class="eyebrow">Reading · Plastic Pollution</p>
           <h1 id="plastic-title" tabindex="-1">Plastic Pollution</h1>
-          <p class="prompt">Read the text. Then find the English words and answer the questions.</p>
+          <p class="prompt">Read the text. Then find the English words and answer the questions. Get every answer right to win one star.</p>
           <div class="reading-text">
             <p>Plastic is everywhere. People use it for bottles, bags, cups and toys. It is light and cheap, but it is also a big problem. Plastic does not disappear. A plastic bottle can stay on a beach or in the sea for hundreds of years.</p>
             <p>Animals sometimes think plastic is food. A turtle can eat a plastic bag because it looks like a jellyfish. Seabirds give small pieces of plastic to their babies. The animals become ill.</p>
@@ -392,7 +396,7 @@
             <p class="result-line quiz-result" aria-live="polite"></p>
           </section>
         </div>
-        <div id="reading-potter" hidden>
+        <div id="reading-potter" data-reading="potter" hidden>
           <button type="button" class="back-button reading-back" aria-label="Back to Reading">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
@@ -401,7 +405,7 @@
           </button>
           <p class="eyebrow">Reading · Harry Potter</p>
           <h1 id="potter-title" tabindex="-1">Harry Potter</h1>
-          <p class="prompt">Read the text. Then find the English words and answer the questions.</p>
+          <p class="prompt">Read the text. Then find the English words and answer the questions. Get every answer right to win one star.</p>
           <div class="reading-text">
             <p>Harry Potter is the hero of a famous story. He is a boy with black hair and green eyes. He lives with his aunt, his uncle and his cousin. They are not kind. Harry sleeps in a tiny room under the stairs.</p>
             <p>On his eleventh birthday, everything changes. Harry learns that he is a wizard. His parents were wizards too, but they died when Harry was a baby. A giant called Hagrid comes to the house. He takes Harry away from his uncle’s family.</p>
@@ -604,10 +608,12 @@
             <button type="button" class="game-choice game-choice-intro" id="open-intro">
               <span class="game-name">Introduce yourself</span>
               <span class="game-blurb">Read an example, then write about you.</span>
+              <span class="game-stars" data-activity="intro"></span>
             </button>
             <button type="button" class="game-choice game-choice-photos" id="open-photo-writing">
               <span class="game-name">Describe a picture</span>
               <span class="game-blurb">Look at four photos and write what you see.</span>
+              <span class="game-stars" data-activity="photo-writing"></span>
             </button>
           </div>
         </div>
@@ -637,7 +643,9 @@
           </ul>
           <label class="write-label" for="intro-text">Your introduction</label>
           <textarea class="write-box" id="intro-text" rows="8" placeholder="Hello! My name is …"></textarea>
-          <p class="write-note">Your writing stays on this computer.</p>
+          <p class="write-note">Your writing stays on this computer. When you have finished, mark this as done to win one star.</p>
+          <button type="button" class="tool-button writing-done" id="intro-done" data-writing-done="intro" aria-pressed="false">Mark as done</button>
+          <p class="result-line" data-writing-status="intro" aria-live="polite"></p>
         </div>
         <div id="writing-photos" hidden>
           <button type="button" class="back-button" id="photo-writing-back" aria-label="Back to Writing">
@@ -681,7 +689,9 @@
               <textarea class="write-box photo-text" id="photo-text-3" rows="7" placeholder="In this photo, I can see …"></textarea>
             </div>
           </article>
-          <p class="write-note">Your writing stays on this computer.</p>
+          <p class="write-note">Your writing stays on this computer. When you have written about all four pictures, mark this as done to win one star.</p>
+          <button type="button" class="tool-button writing-done" id="photo-writing-done" data-writing-done="photo-writing" aria-pressed="false">Mark as done</button>
+          <p class="result-line" data-writing-status="photo-writing" aria-live="polite"></p>
         </div>
       </section>
 
@@ -733,6 +743,6 @@
         </div>
       </section>
     </main>
-    <script src="app.js?v=31"></script>
+    <script src="app.js?v=32"></script>
   </body>
 </html>
