@@ -2224,6 +2224,10 @@ function checkPeople() {
     card.classList.toggle("is-wrong", !right);
     if (right) correct += 1;
   });
+  if (correct === cards.length) {
+    peopleResult.textContent = `${correct} of ${cards.length} correct. ${awardListeningStar("people")}`;
+    return;
+  }
   peopleResult.textContent = `${correct} of ${cards.length} correct.`;
 }
 
