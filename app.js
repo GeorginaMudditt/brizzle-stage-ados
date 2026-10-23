@@ -15,13 +15,14 @@ const pictureStar = document.querySelector("#picture-star");
 const progressKey = "brizzle-stage-ados";
 let currentId = "";
 let pendingStars = 0;
+let writingReady = false;
 let progress = loadProgress();
 
 function loadProgress() {
   try {
     const saved = JSON.parse(localStorage.getItem(progressKey));
     if (!saved || typeof saved !== "object") {
-      return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {} };
+      return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, writing: {} };
     }
     return {
       user: typeof saved.user === "string" ? saved.user : "",
@@ -30,9 +31,10 @@ function loadProgress() {
       pictureDone: saved.pictureDone && typeof saved.pictureDone === "object" ? saved.pictureDone : {},
       memorySeen: saved.memorySeen && typeof saved.memorySeen === "object" ? saved.memorySeen : {},
       grammarDone: saved.grammarDone && typeof saved.grammarDone === "object" ? saved.grammarDone : {},
+      writing: saved.writing && typeof saved.writing === "object" ? saved.writing : {},
     };
   } catch {
-    return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {} };
+    return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, writing: {} };
   }
 }
 
@@ -125,6 +127,20 @@ function claimPending(id) {
     progress.memorySeen[nextKey] = [...mergedWords];
     delete progress.memorySeen[key];
   });
+  if (!progress.writing) progress.writing = {};
+  const waitingWriting = progress.writing.pending;
+  if (waitingWriting && typeof waitingWriting === "object") {
+    const mine = progress.writing[id] && typeof progress.writing[id] === "object"
+      ? progress.writing[id]
+      : { intro: "", photos: [] };
+    const photos = Array.isArray(mine.photos) ? mine.photos : [];
+    const pendingPhotos = Array.isArray(waitingWriting.photos) ? waitingWriting.photos : [];
+    progress.writing[id] = {
+      intro: mine.intro || waitingWriting.intro || "",
+      photos: [0, 1, 2, 3].map((index) => photos[index] || pendingPhotos[index] || ""),
+    };
+    delete progress.writing.pending;
+  }
   saveProgress();
   movePendingRecordings(id);
 }
@@ -141,6 +157,7 @@ function setOpen(open) {
 }
 
 function choose(option, restore) {
+  saveWritingFromPage();
   options.forEach((item) => item.setAttribute("aria-selected", "false"));
   option.setAttribute("aria-selected", "true");
 
@@ -161,6 +178,7 @@ function choose(option, restore) {
   playerBadge.hidden = false;
   stage.hidden = false;
   status.textContent = `${name} is using Brizzle Stage Ados. ${starLabel(totalStars(currentId))}.`;
+  showWritingFromStore();
 
   setOpen(false);
   if (!restore) button.focus();
@@ -568,6 +586,9 @@ window.addEventListener("hashchange", () => {
   if (onSpeakingPage()) showSpeakingMenu();
   if (location.hash === "#vocabulary") showVocabTopics();
   if (location.hash === "#grammar") showGrammarTopics();
+  if (location.hash === "#listening") showListeningTopics();
+  if (location.hash === "#writing") showWritingTopics();
+  if (location.hash === "#reading") showReadingTopics();
   window.scrollTo(0, 0);
 });
 
@@ -1586,6 +1607,97 @@ const grammarLessons = {
       },
     ],
   },
+  past: {
+    id: "past",
+    title: "Past simple",
+    sections: [
+      {
+        heading: "When do we use it?",
+        paragraphs: [
+          "We use the past simple for a finished action. It happened yesterday, last week, last year, or at another time that is finished.",
+        ],
+        examples: ["I played football yesterday.", "She went to Paris last summer."],
+      },
+      {
+        heading: "The verb to be",
+        paragraphs: ["In the past, be has two forms: was and were."],
+        forms: ["I was", "You were", "He was", "She was", "It was", "We were", "They were"],
+        examples: ["I was tired.", "They were at home.", "She was not late.", "Were you at school?"],
+      },
+      {
+        heading: "Regular verbs",
+        paragraphs: [
+          "For most verbs, add -ed. If the verb already ends in e, just add -d.",
+          "travel is a little different: travelled.",
+        ],
+        forms: ["like → liked", "play → played", "watch → watched", "visit → visited", "cook → cooked", "travel → travelled"],
+      },
+      {
+        heading: "Irregular verbs",
+        paragraphs: [
+          "Some verbs do not use -ed. There is no spelling rule, so we learn them in pairs.",
+          "read looks the same in the past, but we say it like red.",
+        ],
+        forms: [
+          "find → found",
+          "eat → ate",
+          "swim → swam",
+          "make → made",
+          "go → went",
+          "have → had",
+          "see → saw",
+          "take → took",
+          "buy → bought",
+          "read → read",
+          "meet → met",
+          "wake up → woke up",
+          "run → ran",
+          "drink → drank",
+          "sleep → slept",
+        ],
+      },
+      {
+        heading: "Negatives and questions",
+        paragraphs: ["Use did and the present verb. You do not add -ed after did."],
+        examples: ["I didn't go.", "Did you go?"],
+      },
+    ],
+    groups: [
+      {
+        title: "Exercise 1. Match the verbs",
+        starId: "past-match",
+        note: "Choose the past simple for each present verb.",
+        choices: ["bought", "went", "ate", "saw", "took", "had", "played", "watched", "travelled", "was/were"],
+        items: [
+          { prompt: "buy", pieces: [{ answers: ["bought"] }] },
+          { prompt: "go", pieces: [{ answers: ["went"] }] },
+          { prompt: "eat", pieces: [{ answers: ["ate"] }] },
+          { prompt: "see", pieces: [{ answers: ["saw"] }] },
+          { prompt: "take", pieces: [{ answers: ["took"] }] },
+          { prompt: "have", pieces: [{ answers: ["had"] }] },
+          { prompt: "play", pieces: [{ answers: ["played"] }] },
+          { prompt: "watch", pieces: [{ answers: ["watched"] }] },
+          { prompt: "travel", pieces: [{ answers: ["travelled"] }] },
+          { prompt: "be", pieces: [{ answers: ["was/were"] }] },
+        ],
+      },
+      {
+        title: "Exercise 2. Past simple in a sentence",
+        starId: "past-gaps",
+        note: "Write the past simple in the gap. The verb in brackets is the present.",
+        items: [
+          { hint: "swim", pieces: ["She ", { answers: ["swam"] }, " across the pool."] },
+          { hint: "find", pieces: ["I ", { answers: ["found"] }, " my keys under the sofa."] },
+          { hint: "visit", pieces: ["We ", { answers: ["visited"] }, " our grandparents on Sunday."] },
+          { hint: "drink", pieces: ["He ", { answers: ["drank"] }, " a glass of milk."] },
+          { hint: "sleep", pieces: ["The baby ", { answers: ["slept"] }, " for two hours."] },
+          { hint: "cook", pieces: ["Mum ", { answers: ["cooked"] }, " pasta last night."] },
+          { hint: "run", pieces: ["They ", { answers: ["ran"] }, " to the bus stop."] },
+          { hint: "make", pieces: ["I ", { answers: ["made"] }, " a birthday card for my friend."] },
+        ],
+      },
+    ],
+  },
 };
 
 let currentGrammarId = "";
@@ -1626,6 +1738,35 @@ function renderExercise(item, number) {
   count.className = "exercise-number";
   count.textContent = `${number}.`;
   row.append(count);
+  if (item.choices) {
+    const prompt = document.createElement("span");
+    prompt.className = "match-prompt";
+    prompt.textContent = item.prompt;
+    const select = document.createElement("select");
+    select.className = "gap-input verb-choice";
+    select.setAttribute("aria-label", `Past simple of ${item.prompt}`);
+    select.dataset.answers = item.pieces[0].answers.join("|");
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "Choose";
+    select.append(blank);
+    item.choices.forEach((choice) => {
+      const option = document.createElement("option");
+      option.value = choice;
+      option.textContent = choice;
+      select.append(option);
+    });
+    const clearMark = () => {
+      select.classList.remove("is-right", "is-wrong");
+      row.querySelector(".exercise-mark").textContent = "";
+      const nearby = row.closest(".exercise-group")?.querySelector(".result-line");
+      if (nearby) nearby.textContent = "";
+      grammarResult.textContent = "";
+    };
+    select.addEventListener("input", clearMark);
+    select.addEventListener("change", clearMark);
+    row.append(prompt, select);
+  } else {
   item.pieces.forEach((piece) => {
     if (typeof piece === "string") {
       row.append(document.createTextNode(piece));
@@ -1665,6 +1806,7 @@ function renderExercise(item, number) {
     hint.className = "exercise-hint";
     hint.textContent = `(${item.hint})`;
     row.append(hint);
+  }
   }
   const mark = document.createElement("span");
   mark.className = "exercise-mark";
@@ -1739,9 +1881,10 @@ function openGrammarLesson(id) {
     const list = document.createElement("ol");
     list.className = "exercise-list";
     if (group.starId) number = 0;
+    const choiceBank = group.choices ? shuffle(group.choices) : null;
     group.items.forEach((item) => {
       number += 1;
-      list.append(renderExercise(item, number));
+      list.append(renderExercise(choiceBank ? { ...item, choices: choiceBank } : item, number));
     });
     block.append(heading, note, list);
     if (group.starId) {
@@ -1820,5 +1963,421 @@ document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
   event.preventDefault();
   if (!grammarLesson.hidden) showGrammarTopics();
+  else location.hash = "#home";
+});
+
+const listeningTopics = document.querySelector("#listening-topics");
+const listeningPlay = document.querySelector("#listening-play");
+const listeningPeople = document.querySelector("#listening-people");
+const listeningTitle = document.querySelector("#listening-title");
+const landmarksTitle = document.querySelector("#landmarks-title");
+const landmarkAudio = document.querySelector("#landmark-audio");
+const landmarkMissing = document.querySelector("#landmark-missing");
+const landmarkSpeed = document.querySelector("#landmark-speed");
+const landmarkQuiz = document.querySelector("#landmark-quiz");
+const landmarkResult = document.querySelector("#landmark-result");
+
+function syncHeaderOffset() {
+  const header = document.querySelector(".site-header");
+  if (!header) return;
+  document.documentElement.style.setProperty(
+    "--header-offset",
+    `${Math.ceil(header.getBoundingClientRect().height) + 8}px`
+  );
+}
+
+function pausePeople() {
+  document.querySelectorAll(".people-clip audio").forEach((audio) => {
+    audio.pause();
+  });
+  document.querySelectorAll(".people-play").forEach((button) => {
+    button.textContent = button.dataset.label;
+    button.setAttribute("aria-pressed", "false");
+    button.classList.remove("is-last");
+    button.removeAttribute("aria-current");
+  });
+  const now = document.querySelector("#people-now");
+  if (now) {
+    now.hidden = true;
+    now.textContent = "";
+  }
+}
+
+function showListeningTopics() {
+  listeningPlay.hidden = true;
+  listeningPeople.hidden = true;
+  listeningTopics.hidden = false;
+  if (landmarkAudio) landmarkAudio.pause();
+  pausePeople();
+  window.scrollTo(0, 0);
+  listeningTitle.focus();
+}
+
+function showLandmarks() {
+  listeningTopics.hidden = true;
+  listeningPeople.hidden = true;
+  listeningPlay.hidden = false;
+  pausePeople();
+  window.scrollTo(0, 0);
+  landmarksTitle.focus();
+}
+
+function skipAudio(seconds) {
+  if (!Number.isFinite(landmarkAudio.duration)) return;
+  landmarkAudio.currentTime = Math.min(
+    landmarkAudio.duration,
+    Math.max(0, landmarkAudio.currentTime + seconds)
+  );
+}
+
+function checkLandmarks() {
+  const items = [...landmarkQuiz.querySelectorAll(".quiz-item")];
+  let correct = 0;
+  items.forEach((item) => {
+    item.querySelectorAll("label").forEach((label) => {
+      label.classList.remove("is-right", "is-wrong");
+    });
+    const chosen = item.querySelector("input:checked");
+    const right = item.querySelector(`input[value="${item.dataset.answer}"]`);
+    if (right) right.closest("label").classList.add("is-right");
+    if (chosen && chosen.value === item.dataset.answer) correct += 1;
+    else if (chosen) chosen.closest("label").classList.add("is-wrong");
+  });
+  landmarkResult.textContent = `${correct} of ${items.length} correct.`;
+}
+
+document.querySelector("#open-landmarks").addEventListener("click", showLandmarks);
+document.querySelector("#listening-back").addEventListener("click", showListeningTopics);
+document.querySelector("#landmark-back-ten").addEventListener("click", () => skipAudio(-10));
+document.querySelector("#landmark-forward-ten").addEventListener("click", () => skipAudio(10));
+landmarkSpeed.addEventListener("click", () => {
+  const slow = landmarkAudio.playbackRate === 1;
+  landmarkAudio.playbackRate = slow ? 0.75 : 1;
+  landmarkSpeed.textContent = slow ? "Play at normal speed" : "Play at 0.75 speed";
+  landmarkSpeed.setAttribute("aria-pressed", String(slow));
+});
+landmarkAudio.addEventListener("error", () => {
+  landmarkMissing.hidden = false;
+});
+document.querySelector("#landmark-check").addEventListener("click", checkLandmarks);
+landmarkQuiz.addEventListener("change", () => {
+  landmarkResult.textContent = "";
+});
+
+const people = [
+  { id: 1, alt: "A boy with short black hair holding a map, in a green jacket and brown boots." },
+  { id: 2, alt: "An older woman with short grey hair, a blue coat, and a blue umbrella." },
+  { id: 3, alt: "A smiling child in a blue and white striped T-shirt and a colourful paper hat." },
+  { id: 4, alt: "An older man with grey hair, a white beard, glasses, and a green jumper." },
+  { id: 5, alt: "A girl with a brown braid, a pink apron, and a mixing bowl." },
+  { id: 6, alt: "A young woman with brown hair in a bun, green eyes, a beige cardigan, and black and white striped trousers." },
+  { id: 7, alt: "A man with curly brown hair and a beard, a red plaid shirt, brown shoes, and a mug of coffee." },
+  { id: 8, alt: "A boy with very short brown hair, a red T-shirt, and a glass of orange juice." },
+  { id: 9, alt: "A smiling girl in a navy school uniform and a yellow hat." },
+  { id: 10, alt: "An older woman with curly grey hair, lots of jewellery, colourful patterned trousers, and flower sandals." },
+  { id: 11, alt: "A boy in a purple T-shirt and shorts, holding a football." },
+  { id: 12, alt: "A boy with glasses and short black hair, eating a sandwich." },
+  { id: 13, alt: "A smiling girl with long red hair, headphones, a green and white striped jumper, and jeans." },
+  { id: 14, alt: "An older man with curly grey hair, a grey moustache, a red tie, and black and white striped trousers." },
+];
+
+const peopleClips = document.querySelector("#people-clips");
+const peopleGrid = document.querySelector("#people-grid");
+const peopleResult = document.querySelector("#people-result");
+const peopleSpeed = document.querySelector("#people-speed");
+const peopleTitle = document.querySelector("#people-title");
+let peopleSlow = false;
+
+function peopleRate() {
+  return peopleSlow ? 0.75 : 1;
+}
+
+function resetPeopleButton(button) {
+  button.textContent = button.dataset.label;
+  button.setAttribute("aria-pressed", "false");
+}
+
+function rememberPeople(button, id, playing) {
+  document.querySelectorAll(".people-play").forEach((other) => {
+    const current = other === button;
+    other.classList.toggle("is-last", current);
+    if (current) other.setAttribute("aria-current", "true");
+    else other.removeAttribute("aria-current");
+  });
+  const now = document.querySelector("#people-now");
+  now.hidden = false;
+  now.textContent = playing ? `Playing: Description ${id}` : `Last one: Description ${id}`;
+}
+
+people.forEach((person) => {
+  const audio = document.createElement("audio");
+  audio.preload = "none";
+  audio.src = `assets/people-${person.id}.mp3?v=3`;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "tool-button people-play";
+  button.dataset.label = `Description ${person.id}`;
+  button.setAttribute("aria-pressed", "false");
+  resetPeopleButton(button);
+  button.addEventListener("click", () => {
+    if (!audio.paused) {
+      audio.pause();
+      resetPeopleButton(button);
+      rememberPeople(button, person.id, false);
+      return;
+    }
+    document.querySelectorAll(".people-clip audio").forEach((other) => {
+      if (other !== audio) other.pause();
+    });
+    document.querySelectorAll(".people-play").forEach(resetPeopleButton);
+    audio.playbackRate = peopleRate();
+    audio.play();
+    button.textContent = `Pause ${person.id}`;
+    button.setAttribute("aria-pressed", "true");
+    rememberPeople(button, person.id, true);
+  });
+  audio.addEventListener("ended", () => {
+    resetPeopleButton(button);
+    rememberPeople(button, person.id, false);
+  });
+  const clip = document.createElement("div");
+  clip.className = "people-clip";
+  clip.append(button, audio);
+  peopleClips.append(clip);
+});
+
+shuffle(people).forEach((person) => {
+  const card = document.createElement("figure");
+  card.className = "people-card";
+  card.dataset.person = String(person.id);
+  const image = document.createElement("img");
+  image.src = `assets/people-${person.id}.jpg`;
+  image.alt = person.alt;
+  const label = document.createElement("label");
+  const selectId = `people-choice-${person.id}`;
+  label.htmlFor = selectId;
+  label.textContent = "Which description?";
+  const select = document.createElement("select");
+  select.id = selectId;
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "Choose";
+  select.append(blank);
+  people.forEach((choice) => {
+    const option = document.createElement("option");
+    option.value = String(choice.id);
+    option.textContent = `Description ${choice.id}`;
+    select.append(option);
+  });
+  select.addEventListener("change", () => {
+    card.classList.remove("is-right", "is-wrong");
+    peopleResult.textContent = "";
+  });
+  card.append(image, label, select);
+  peopleGrid.append(card);
+});
+
+function showPeople() {
+  listeningTopics.hidden = true;
+  listeningPlay.hidden = true;
+  listeningPeople.hidden = false;
+  if (landmarkAudio) landmarkAudio.pause();
+  syncHeaderOffset();
+  window.scrollTo(0, 0);
+  peopleTitle.focus();
+}
+
+window.addEventListener("resize", syncHeaderOffset);
+
+function checkPeople() {
+  const cards = [...peopleGrid.querySelectorAll(".people-card")];
+  let correct = 0;
+  cards.forEach((card) => {
+    const select = card.querySelector("select");
+    const right = select.value === card.dataset.person;
+    card.classList.toggle("is-right", right);
+    card.classList.toggle("is-wrong", !right);
+    if (right) correct += 1;
+  });
+  peopleResult.textContent = `${correct} of ${cards.length} correct.`;
+}
+
+document.querySelector("#open-people").addEventListener("click", showPeople);
+document.querySelector("#people-back").addEventListener("click", showListeningTopics);
+document.querySelector("#people-check").addEventListener("click", checkPeople);
+peopleSpeed.addEventListener("click", () => {
+  peopleSlow = !peopleSlow;
+  peopleSpeed.textContent = peopleSlow ? "Play at normal speed" : "Play at 0.75 speed";
+  peopleSpeed.setAttribute("aria-pressed", String(peopleSlow));
+  document.querySelectorAll(".people-clip audio").forEach((audio) => {
+    audio.playbackRate = peopleRate();
+  });
+});
+
+document.addEventListener("keydown", (event) => {
+  if (location.hash !== "#listening" || event.target.closest(".user-menu")) return;
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  if (!listeningPlay.hidden || !listeningPeople.hidden) showListeningTopics();
+  else location.hash = "#home";
+});
+
+const writingTopics = document.querySelector("#writing-topics");
+const writingIntro = document.querySelector("#writing-intro");
+const writingPhotos = document.querySelector("#writing-photos");
+const writingTitle = document.querySelector("#writing-title");
+const introText = document.querySelector("#intro-text");
+const photoTexts = [...document.querySelectorAll(".photo-text")];
+let writingTimer = 0;
+
+function saveWritingFromPage() {
+  if (!writingReady || !introText) return;
+  clearTimeout(writingTimer);
+  if (!progress.writing) progress.writing = {};
+  progress.writing[currentId || "pending"] = {
+    intro: introText.value,
+    photos: photoTexts.map((box) => box.value),
+  };
+  saveProgress();
+}
+
+function showWritingFromStore() {
+  if (!writingReady || !introText) return;
+  const saved = (progress.writing && progress.writing[currentId || "pending"]) || {};
+  const photos = Array.isArray(saved.photos) ? saved.photos : [];
+  introText.value = saved.intro || "";
+  photoTexts.forEach((box, index) => {
+    box.value = photos[index] || "";
+  });
+}
+
+function showWritingTopics() {
+  writingIntro.hidden = true;
+  writingPhotos.hidden = true;
+  writingTopics.hidden = false;
+  writingTitle.focus();
+}
+
+function showIntro() {
+  writingTopics.hidden = true;
+  writingPhotos.hidden = true;
+  writingIntro.hidden = false;
+  document.querySelector("#intro-title").focus();
+  window.scrollTo(0, 0);
+}
+
+function showPhotoWriting() {
+  writingTopics.hidden = true;
+  writingIntro.hidden = true;
+  writingPhotos.hidden = false;
+  document.querySelector("#photo-writing-title").focus();
+  window.scrollTo(0, 0);
+}
+
+document.querySelector("#open-intro").addEventListener("click", showIntro);
+document.querySelector("#open-photo-writing").addEventListener("click", showPhotoWriting);
+document.querySelector("#intro-back").addEventListener("click", showWritingTopics);
+document.querySelector("#photo-writing-back").addEventListener("click", showWritingTopics);
+[introText, ...photoTexts].forEach((box) => {
+  box.addEventListener("input", () => {
+    clearTimeout(writingTimer);
+    writingTimer = setTimeout(saveWritingFromPage, 300);
+  });
+});
+writingReady = true;
+showWritingFromStore();
+
+document.addEventListener("keydown", (event) => {
+  if (location.hash !== "#writing" || event.target.closest(".user-menu")) return;
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  if (!writingIntro.hidden || !writingPhotos.hidden) showWritingTopics();
+  else location.hash = "#home";
+});
+
+const readingTopics = document.querySelector("#reading-topics");
+const readingPlastic = document.querySelector("#reading-plastic");
+const readingPotter = document.querySelector("#reading-potter");
+const readingTitle = document.querySelector("#reading-title");
+
+function readingWord(value) {
+  return tidyAnswer(value).replace(/^(a|an|the)\s+/, "");
+}
+
+function checkReadingWords(block) {
+  const items = [...block.querySelectorAll(".word-item")];
+  let correct = 0;
+  items.forEach((item) => {
+    const input = item.querySelector("input");
+    const answers = input.dataset.answers.split("|");
+    const right = answers.some((answer) => readingWord(input.value) === tidyAnswer(answer));
+    input.classList.toggle("is-right", right);
+    input.classList.toggle("is-wrong", !right);
+    if (right) correct += 1;
+  });
+  const result = block.querySelector(".word-result");
+  result.textContent = correct === items.length
+    ? `All ${items.length} words are correct.`
+    : `${correct} of ${items.length} correct. Look again at the pink boxes.`;
+}
+
+function checkReadingQuiz(block) {
+  const items = [...block.querySelectorAll(".quiz-item")];
+  let correct = 0;
+  items.forEach((item) => {
+    item.querySelectorAll("label").forEach((label) => label.classList.remove("is-right", "is-wrong"));
+    const chosen = item.querySelector("input:checked");
+    const right = item.querySelector(`input[value="${item.dataset.answer}"]`);
+    if (right) right.closest("label").classList.add("is-right");
+    if (chosen && chosen.value === item.dataset.answer) correct += 1;
+    else if (chosen) chosen.closest("label").classList.add("is-wrong");
+  });
+  block.querySelector(".quiz-result").textContent = `${correct} of ${items.length} correct.`;
+}
+
+function showReadingTopics() {
+  readingPlastic.hidden = true;
+  readingPotter.hidden = true;
+  readingTopics.hidden = false;
+  window.scrollTo(0, 0);
+  readingTitle.focus();
+}
+
+function showReading(panel, title) {
+  readingTopics.hidden = true;
+  readingPlastic.hidden = panel !== readingPlastic;
+  readingPotter.hidden = panel !== readingPotter;
+  window.scrollTo(0, 0);
+  title.focus();
+}
+
+document.querySelector("#open-plastic").addEventListener("click", () => showReading(readingPlastic, document.querySelector("#plastic-title")));
+document.querySelector("#open-potter").addEventListener("click", () => showReading(readingPotter, document.querySelector("#potter-title")));
+document.querySelectorAll(".reading-back").forEach((button) => {
+  button.addEventListener("click", showReadingTopics);
+});
+document.querySelectorAll(".reading-word-check").forEach((button) => {
+  button.addEventListener("click", () => checkReadingWords(button.closest(".word-hunt")));
+});
+document.querySelectorAll(".reading-quiz-check").forEach((button) => {
+  button.addEventListener("click", () => checkReadingQuiz(button.closest(".reading-quiz")));
+});
+document.querySelectorAll(".word-item input").forEach((input) => {
+  input.addEventListener("input", () => {
+    input.classList.remove("is-right", "is-wrong");
+    input.closest(".word-hunt").querySelector(".word-result").textContent = "";
+  });
+});
+document.querySelectorAll(".reading-quiz").forEach((quiz) => {
+  quiz.addEventListener("change", () => {
+    quiz.querySelector(".quiz-result").textContent = "";
+  });
+});
+
+document.addEventListener("keydown", (event) => {
+  if (location.hash !== "#reading" || event.target.closest(".user-menu")) return;
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  if (!readingPlastic.hidden || !readingPotter.hidden) showReadingTopics();
   else location.hash = "#home";
 });

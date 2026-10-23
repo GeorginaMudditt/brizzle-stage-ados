@@ -55,7 +55,7 @@ body::before {
     radial-gradient(circle, #db2777 0 3px, transparent 4px);
   background-size: 220px 180px, 260px 210px, 190px 230px, 160px 150px;
   background-position: 12px 90px, 70px 30px, 40px 150px, 110px 60px;
-  opacity: 0.28;
+  opacity: 0.035;
 }
 
 .site-header,
@@ -323,19 +323,28 @@ body::before {
 
 #speaking,
 #vocabulary,
-#grammar {
+#grammar,
+#listening,
+#writing,
+#reading {
   display: none;
 }
 
 #speaking:target,
 #vocabulary:target,
-#grammar:target {
+#grammar:target,
+#listening:target,
+#writing:target,
+#reading:target {
   display: block !important;
 }
 
 body:has(#speaking:target) .card-grid,
 body:has(#vocabulary:target) .card-grid,
-body:has(#grammar:target) .card-grid {
+body:has(#grammar:target) .card-grid,
+body:has(#listening:target) .card-grid,
+body:has(#writing:target) .card-grid,
+body:has(#reading:target) .card-grid {
   display: none !important;
 }
 
@@ -427,10 +436,12 @@ body:has(#grammar:target) .card-grid {
 
 .card-reading {
   background: var(--red);
+  padding: 0;
 }
 
 .card-listening {
   background: var(--purple);
+  padding: 0;
 }
 
 .card-speaking {
@@ -712,6 +723,7 @@ body:has(#grammar:target) .card-grid {
 
 .card-writing {
   background: var(--fuchsia);
+  padding: 0;
 }
 
 .card-grammar {
@@ -1031,6 +1043,7 @@ body:has(#grammar:target) .card-grid {
 }
 
 .game-choice {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1065,8 +1078,274 @@ body:has(#grammar:target) .card-grid {
   background: var(--indigo);
 }
 
+.game-choice:hover .soon,
+.game-choice:focus-within .soon {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .game-choice-letters {
   background: var(--fuchsia);
+}
+
+.game-choice-landmarks {
+  background: var(--blue);
+}
+
+.game-choice-people {
+  background: var(--pink);
+}
+
+.people-clips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.people-now {
+  position: sticky;
+  top: var(--header-offset, 6rem);
+  z-index: 8;
+  margin: 0.9rem 0 0;
+  padding: 0.55rem 1rem;
+  border-radius: 14px;
+  background: var(--pink);
+  color: white;
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  box-shadow: 0 4px 0 rgba(42, 24, 72, 0.12);
+}
+
+.people-heading {
+  margin: 1.4rem 0 0;
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  font-size: 1.45rem;
+}
+
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+  margin-top: 0.7rem;
+}
+
+.people-card {
+  margin: 0;
+  padding: 0.55rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 0 rgba(42, 24, 72, 0.08);
+  border: 3px solid transparent;
+}
+
+.people-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #fff8ee;
+}
+
+.people-card label {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.people-card select {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.35rem 0.4rem;
+  border: 3px solid #eadcf5;
+  border-radius: 10px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+
+.people-card.is-right {
+  border-color: #178a4a;
+}
+
+.people-card.is-wrong {
+  border-color: var(--red);
+}
+
+.people-play[aria-pressed="true"],
+.people-play.is-last {
+  background: var(--pink);
+  color: white;
+}
+
+.game-choice-intro {
+  background: var(--fuchsia);
+}
+
+.game-choice-photos {
+  background: var(--indigo);
+}
+
+.model-card {
+  margin-top: 0.4rem;
+  padding: 1rem 1.15rem 1.1rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 0 rgba(42, 24, 72, 0.08);
+}
+
+.model-label,
+.write-label {
+  margin: 0.9rem 0 0;
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  font-size: 1.2rem;
+}
+
+.model-label {
+  margin: 0 0 0.35rem;
+  color: var(--fuchsia);
+}
+
+.model-card p:last-child {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.write-helps {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+  line-height: 1.55;
+}
+
+.write-box {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.75rem 0.85rem;
+  border: 3px solid #f3d0ea;
+  border-radius: 16px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.write-box:focus {
+  outline: 3px solid var(--purple);
+  outline-offset: 2px;
+  border-color: var(--purple);
+}
+
+.write-note {
+  margin: 0.7rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.write-photo {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.15fr) minmax(220px, 0.85fr);
+  gap: 0.9rem;
+  align-items: start;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 0 rgba(42, 24, 72, 0.08);
+}
+
+.write-photo img {
+  display: block;
+  width: 100%;
+  border-radius: 16px;
+}
+
+.write-photo h2 {
+  margin: 0;
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  font-size: 1.35rem;
+}
+
+.write-photo .write-label {
+  margin-top: 0.55rem;
+}
+
+@media (max-width: 720px) {
+  .write-photo {
+    grid-template-columns: 1fr;
+  }
+}
+
+.listen-player audio {
+  width: min(100%, 36rem);
+  margin-top: 0.4rem;
+}
+
+.listen-missing {
+  margin: 0.7rem 0 0;
+  font-weight: 600;
+}
+
+.listen-credit {
+  max-width: 40rem;
+  margin: 0.85rem 0 0;
+  line-height: 1.45;
+}
+
+.listen-credit em {
+  font-style: italic;
+}
+
+.listen-credit a {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.quiz-list {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.quiz-item {
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  background: #fff7fc;
+}
+
+.quiz-item p {
+  margin: 0 0 0.4rem;
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  font-size: 1.12rem;
+}
+
+.quiz-item label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 0.28rem 0;
+  cursor: pointer;
+}
+
+.quiz-item label.is-right {
+  color: #178a4a;
+  font-weight: 600;
+}
+
+.quiz-item label.is-wrong {
+  color: var(--red);
+  font-weight: 600;
+}
+
+#landmark-check {
+  margin-top: 1rem;
 }
 
 .game-choice-simple {
@@ -1079,6 +1358,70 @@ body:has(#grammar:target) .card-grid {
 
 .game-choice-contrast {
   background: var(--purple);
+}
+
+.game-choice-past {
+  background: var(--red);
+}
+
+.game-choice-plastic {
+  background: var(--blue);
+}
+
+.game-choice-potter {
+  background: var(--indigo);
+}
+
+.reading-text {
+  margin-top: 0.4rem;
+  padding: 1rem 1.15rem 1.15rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 0 rgba(42, 24, 72, 0.08);
+}
+
+.reading-text p {
+  margin: 0.75rem 0 0;
+  line-height: 1.55;
+}
+
+.reading-text p:first-child {
+  margin-top: 0;
+}
+
+.word-list {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.word-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 1rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 16px;
+  background: #fff7fc;
+}
+
+.word-item em {
+  font-style: italic;
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  font-size: 1.15rem;
+}
+
+.match-prompt {
+  min-width: 5.5rem;
+}
+
+.verb-choice {
+  width: auto;
+  min-width: 9.5rem;
 }
 
 #grammar-topics .game-choices {
@@ -1581,7 +1924,10 @@ body:has(#grammar:target) .card-grid {
 
   .card-vocabulary,
   .card-speaking,
-  .card-grammar {
+  .card-grammar,
+  .card-listening,
+  .card-writing,
+  .card-reading {
     padding: 0;
   }
 

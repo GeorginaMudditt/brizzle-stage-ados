@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=22" />
+    <link rel="stylesheet" href="styles.css?v=30" />
   </head>
   <body>
     <header class="site-header">
@@ -123,12 +123,14 @@
           </a>
         </li>
         <li class="card card-reading">
-          <span>Reading</span>
-          <p class="soon">There is no reading content yet. Please come back later.</p>
+          <a class="card-open" href="#reading">
+            <span>Reading</span>
+          </a>
         </li>
         <li class="card card-listening">
-          <span>Listening</span>
-          <p class="soon">There is no listening content yet. Please come back later.</p>
+          <a class="card-open" href="#listening">
+            <span>Listening</span>
+          </a>
         </li>
         <li class="card card-speaking">
           <a class="card-open" href="#speaking">
@@ -136,8 +138,9 @@
           </a>
         </li>
         <li class="card card-writing">
-          <span>Writing</span>
-          <p class="soon">There is no writing content yet. Please come back later.</p>
+          <a class="card-open" href="#writing">
+            <span>Writing</span>
+          </a>
         </li>
         <li class="card card-grammar">
           <a class="card-open" href="#grammar">
@@ -296,6 +299,384 @@
         </div>
       </section>
 
+      <section class="panel" id="reading">
+        <div id="reading-topics">
+          <a class="back-button" href="#home" aria-label="Back to all skills">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            All skills
+          </a>
+          <h1 id="reading-title" tabindex="-1">Reading</h1>
+          <div class="game-choices">
+            <button type="button" class="game-choice game-choice-plastic" id="open-plastic">
+              <span class="game-name">Plastic Pollution</span>
+              <span class="game-blurb">Read about plastic in the sea, then answer the questions.</span>
+            </button>
+            <button type="button" class="game-choice game-choice-potter" id="open-potter">
+              <span class="game-name">Harry Potter</span>
+              <span class="game-blurb">Read about Harry, then answer the questions.</span>
+            </button>
+          </div>
+        </div>
+        <div id="reading-plastic" hidden>
+          <button type="button" class="back-button reading-back" aria-label="Back to Reading">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Reading
+          </button>
+          <p class="eyebrow">Reading · Plastic Pollution</p>
+          <h1 id="plastic-title" tabindex="-1">Plastic Pollution</h1>
+          <p class="prompt">Read the text. Then find the English words and answer the questions.</p>
+          <div class="reading-text">
+            <p>Plastic is everywhere. People use it for bottles, bags, cups and toys. It is light and cheap, but it is also a big problem. Plastic does not disappear. A plastic bottle can stay on a beach or in the sea for hundreds of years.</p>
+            <p>Animals sometimes think plastic is food. A turtle can eat a plastic bag because it looks like a jellyfish. Seabirds give small pieces of plastic to their babies. The animals become ill.</p>
+            <p>Plastic also breaks into tiny pieces. These pieces are called microplastics. They are in the sea, in rivers, and even in some of the food we eat.</p>
+            <p>We can help. Carry a reusable bottle. Take a cloth bag to the shop. Say no to a plastic straw. Recycle bottles and put them in the right bin. Small actions protect the ocean and the animals that live there.</p>
+          </div>
+          <section class="exercise-group word-hunt">
+            <h2>Find the word</h2>
+            <p class="exercise-note">Read the French word. Find that word in the text and write it in English.</p>
+            <ol class="word-list">
+              <li class="word-item"><em>une bouteille</em><input class="gap-input" data-answers="bottle|bottles" aria-label="English for une bouteille" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>un sac</em><input class="gap-input" data-answers="bag|bags" aria-label="English for un sac" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>une tortue</em><input class="gap-input" data-answers="turtle|turtles" aria-label="English for une tortue" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>la nourriture</em><input class="gap-input" data-answers="food" aria-label="English for la nourriture" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>une rivière</em><input class="gap-input" data-answers="river|rivers" aria-label="English for une rivière" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>une paille</em><input class="gap-input" data-answers="straw|straws" aria-label="English for une paille" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+            </ol>
+            <button type="button" class="next-round reading-word-check">Check answers</button>
+            <p class="result-line word-result" aria-live="polite"></p>
+          </section>
+          <section class="exercise-group reading-quiz">
+            <h2>Questions</h2>
+            <p class="exercise-note">Choose one answer for each question.</p>
+            <ol class="quiz-list">
+              <li class="quiz-item" data-answer="years">
+                <p>How long can a plastic bottle stay in the sea?</p>
+                <label><input type="radio" name="pq1" value="week" /> One week</label>
+                <label><input type="radio" name="pq1" value="years" /> Hundreds of years</label>
+                <label><input type="radio" name="pq1" value="day" /> One day</label>
+                <label><input type="radio" name="pq1" value="month" /> One month</label>
+              </li>
+              <li class="quiz-item" data-answer="jellyfish">
+                <p>Why can a turtle eat a plastic bag?</p>
+                <label><input type="radio" name="pq2" value="fish" /> The bag looks like a fish</label>
+                <label><input type="radio" name="pq2" value="jellyfish" /> The bag looks like a jellyfish</label>
+                <label><input type="radio" name="pq2" value="person" /> A person feeds the turtle</label>
+                <label><input type="radio" name="pq2" value="hungry" /> The bag is real food</label>
+              </li>
+              <li class="quiz-item" data-answer="micro">
+                <p>What are the tiny pieces of plastic called?</p>
+                <label><input type="radio" name="pq3" value="bins" /> Bins</label>
+                <label><input type="radio" name="pq3" value="cups" /> Cups</label>
+                <label><input type="radio" name="pq3" value="micro" /> Microplastics</label>
+                <label><input type="radio" name="pq3" value="toys" /> Toys</label>
+              </li>
+              <li class="quiz-item" data-answer="bag">
+                <p>Which action helps the ocean?</p>
+                <label><input type="radio" name="pq4" value="throw" /> Throw bags on the beach</label>
+                <label><input type="radio" name="pq4" value="cups" /> Buy more plastic cups</label>
+                <label><input type="radio" name="pq4" value="feed" /> Give plastic to animals</label>
+                <label><input type="radio" name="pq4" value="bag" /> Take a cloth bag to the shop</label>
+              </li>
+            </ol>
+            <button type="button" class="next-round reading-quiz-check">Check answers</button>
+            <p class="result-line quiz-result" aria-live="polite"></p>
+          </section>
+        </div>
+        <div id="reading-potter" hidden>
+          <button type="button" class="back-button reading-back" aria-label="Back to Reading">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Reading
+          </button>
+          <p class="eyebrow">Reading · Harry Potter</p>
+          <h1 id="potter-title" tabindex="-1">Harry Potter</h1>
+          <p class="prompt">Read the text. Then find the English words and answer the questions.</p>
+          <div class="reading-text">
+            <p>Harry Potter is the hero of a famous story. He is a boy with black hair and green eyes. He lives with his aunt, his uncle and his cousin. They are not kind. Harry sleeps in a tiny room under the stairs.</p>
+            <p>On his eleventh birthday, everything changes. Harry learns that he is a wizard. His parents were wizards too, but they died when Harry was a baby. A giant called Hagrid comes to the house. He takes Harry away from his uncle’s family.</p>
+            <p>Harry goes to a school for witches and wizards. The school is called Hogwarts. There he meets two friends, Ron and Hermione. They study magic, they fly on broomsticks, and they play a game called Quidditch. Harry is the youngest player in the team.</p>
+            <p>Harry has a scar on his forehead. It looks like a lightning bolt. A dangerous wizard gave him this scar. At Hogwarts, Harry and his friends are brave. They look after each other when there is trouble.</p>
+          </div>
+          <section class="exercise-group word-hunt">
+            <h2>Find the word</h2>
+            <p class="exercise-note">Read the French word. Find that word in the text and write it in English.</p>
+            <ol class="word-list">
+              <li class="word-item"><em>un anniversaire</em><input class="gap-input" data-answers="birthday" aria-label="English for un anniversaire" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>un sorcier</em><input class="gap-input" data-answers="wizard|wizards" aria-label="English for un sorcier" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>un géant</em><input class="gap-input" data-answers="giant|giants" aria-label="English for un géant" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>une école</em><input class="gap-input" data-answers="school" aria-label="English for une école" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>un balai</em><input class="gap-input" data-answers="broomstick|broomsticks" aria-label="English for un balai" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+              <li class="word-item"><em>une cicatrice</em><input class="gap-input" data-answers="scar|scars" aria-label="English for une cicatrice" autocomplete="off" autocapitalize="none" spellcheck="false" /></li>
+            </ol>
+            <button type="button" class="next-round reading-word-check">Check answers</button>
+            <p class="result-line word-result" aria-live="polite"></p>
+          </section>
+          <section class="exercise-group reading-quiz">
+            <h2>Questions</h2>
+            <p class="exercise-note">Choose one answer for each question.</p>
+            <ol class="quiz-list">
+              <li class="quiz-item" data-answer="stairs">
+                <p>Where does Harry sleep at his aunt and uncle’s house?</p>
+                <label><input type="radio" name="hq1" value="bedroom" /> In a big bedroom</label>
+                <label><input type="radio" name="hq1" value="stairs" /> In a tiny room under the stairs</label>
+                <label><input type="radio" name="hq1" value="school" /> At Hogwarts</label>
+                <label><input type="radio" name="hq1" value="garden" /> In the garden</label>
+              </li>
+              <li class="quiz-item" data-answer="eleven">
+                <p>How old is Harry when he learns he is a wizard?</p>
+                <label><input type="radio" name="hq2" value="seven" /> Seven</label>
+                <label><input type="radio" name="hq2" value="eleven" /> Eleven</label>
+                <label><input type="radio" name="hq2" value="sixteen" /> Sixteen</label>
+                <label><input type="radio" name="hq2" value="one" /> One</label>
+              </li>
+              <li class="quiz-item" data-answer="hogwarts">
+                <p>What is the name of Harry’s school?</p>
+                <label><input type="radio" name="hq3" value="quidditch" /> Quidditch</label>
+                <label><input type="radio" name="hq3" value="hagrid" /> Hagrid</label>
+                <label><input type="radio" name="hq3" value="hogwarts" /> Hogwarts</label>
+                <label><input type="radio" name="hq3" value="ron" /> Ron</label>
+              </li>
+              <li class="quiz-item" data-answer="bolt">
+                <p>What does Harry’s scar look like?</p>
+                <label><input type="radio" name="hq4" value="star" /> A star</label>
+                <label><input type="radio" name="hq4" value="circle" /> A circle</label>
+                <label><input type="radio" name="hq4" value="letter" /> A letter</label>
+                <label><input type="radio" name="hq4" value="bolt" /> A lightning bolt</label>
+              </li>
+            </ol>
+            <button type="button" class="next-round reading-quiz-check">Check answers</button>
+            <p class="result-line quiz-result" aria-live="polite"></p>
+          </section>
+        </div>
+      </section>
+
+      <section class="panel" id="listening">
+        <div id="listening-topics">
+          <a class="back-button" href="#home" aria-label="Back to all skills">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            All skills
+          </a>
+          <h1 id="listening-title" tabindex="-1">Listening</h1>
+          <div class="game-choices">
+            <button type="button" class="game-choice game-choice-landmarks" id="open-landmarks">
+              <span class="game-name">British Landmarks</span>
+              <span class="game-blurb">Listen to Phil and Georgie, then answer the questions.</span>
+            </button>
+            <button type="button" class="game-choice game-choice-people" id="open-people">
+              <span class="game-name">Describing People</span>
+              <span class="game-blurb">Listen to each person, then find their picture.</span>
+            </button>
+          </div>
+        </div>
+        <div id="listening-play" hidden>
+          <button type="button" class="back-button" id="listening-back" aria-label="Back to Listening">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Listening
+          </button>
+          <p class="eyebrow">Listening · British Landmarks</p>
+          <h1 id="landmarks-title" tabindex="-1">British Landmarks</h1>
+          <p class="prompt">Listen to Phil and Georgie. You can pause the recording, move along the bar, or play it a little more slowly. Then answer the questions.</p>
+          <div class="listen-player">
+            <audio id="landmark-audio" controls preload="metadata" src="assets/british-landmarks.mp3"></audio>
+            <p class="listen-missing" id="landmark-missing" hidden>Save the audio file in the project as assets/british-landmarks.mp3, then refresh this page.</p>
+            <div class="picture-tools">
+              <button type="button" class="tool-button" id="landmark-back-ten">Back 10 seconds</button>
+              <button type="button" class="tool-button" id="landmark-forward-ten">Forward 10 seconds</button>
+              <button type="button" class="tool-button" id="landmark-speed" aria-pressed="false">Play at 0.75 speed</button>
+            </div>
+          </div>
+          <p class="listen-credit">This podcast is from BBC Learning English, <em>Real Easy English</em>. To listen to more Real Easy English podcasts, go to <a href="https://www.bbc.co.uk/learningenglish/english/features/real-easy-english" target="_blank" rel="noopener noreferrer">bbc.co.uk/learningenglish</a>.</p>
+          <p class="listen-credit">The word-for-word transcript is on the BBC site: <a href="https://downloads.bbc.co.uk/learningenglish/realeasyenglish/261016_REE_british_landmarks_transcript.pdf" target="_blank" rel="noopener noreferrer">British landmarks transcript (PDF)</a>.</p>
+          <section class="exercise-group" id="landmark-quiz">
+            <h2>Questions</h2>
+            <p class="exercise-note">Choose one answer for each question.</p>
+            <ol class="quiz-list">
+              <li class="quiz-item" data-answer="hall">
+                <p>Where did Georgie go a few days ago?</p>
+                <label><input type="radio" name="lq1" value="eye" /> The London Eye</label>
+                <label><input type="radio" name="lq1" value="hall" /> The Royal Albert Hall</label>
+                <label><input type="radio" name="lq1" value="stonehenge" /> Stonehenge</label>
+                <label><input type="radio" name="lq1" value="castle" /> Edinburgh Castle</label>
+              </li>
+              <li class="quiz-item" data-answer="concert">
+                <p>Why did she go there this time?</p>
+                <label><input type="radio" name="lq2" value="work" /> She went for work</label>
+                <label><input type="radio" name="lq2" value="concert" /> She went to a classical music concert</label>
+                <label><input type="radio" name="lq2" value="boat" /> She went on a boat</label>
+                <label><input type="radio" name="lq2" value="tour" /> She went on a guided tour</label>
+              </li>
+              <li class="quiz-item" data-answer="choir">
+                <p>What did Georgie do at the Royal Albert Hall last year?</p>
+                <label><input type="radio" name="lq3" value="choir" /> She sang with her choir</label>
+                <label><input type="radio" name="lq3" value="lived" /> She lived there</label>
+                <label><input type="radio" name="lq3" value="government" /> She worked for the government</label>
+                <label><input type="radio" name="lq3" value="photos" /> She took photos of the river</label>
+              </li>
+              <li class="quiz-item" data-answer="river">
+                <p>What is Phil’s favourite thing in London?</p>
+                <label><input type="radio" name="lq4" value="tower" /> The Tower of London</label>
+                <label><input type="radio" name="lq4" value="bridge" /> Tower Bridge</label>
+                <label><input type="radio" name="lq4" value="river" /> Going along the river on a boat</label>
+                <label><input type="radio" name="lq4" value="eye" /> The London Eye</label>
+              </li>
+              <li class="quiz-item" data-answer="tower">
+                <p>What is Georgie’s favourite landmark in London?</p>
+                <label><input type="radio" name="lq5" value="ben" /> Big Ben</label>
+                <label><input type="radio" name="lq5" value="tower" /> The Tower of London</label>
+                <label><input type="radio" name="lq5" value="parliament" /> The Houses of Parliament</label>
+                <label><input type="radio" name="lq5" value="hall" /> The Royal Albert Hall</label>
+              </li>
+              <li class="quiz-item" data-answer="scotland">
+                <p>Edinburgh is the capital of which country?</p>
+                <label><input type="radio" name="lq6" value="england" /> England</label>
+                <label><input type="radio" name="lq6" value="wales" /> Wales</label>
+                <label><input type="radio" name="lq6" value="scotland" /> Scotland</label>
+                <label><input type="radio" name="lq6" value="ireland" /> Ireland</label>
+              </li>
+              <li class="quiz-item" data-answer="castle">
+                <p>What stands on the big rock in the middle of Edinburgh?</p>
+                <label><input type="radio" name="lq7" value="stones" /> Stonehenge</label>
+                <label><input type="radio" name="lq7" value="castle" /> Edinburgh Castle</label>
+                <label><input type="radio" name="lq7" value="ben" /> Big Ben</label>
+                <label><input type="radio" name="lq7" value="hall" /> The Royal Albert Hall</label>
+              </li>
+              <li class="quiz-item" data-answer="stonehenge">
+                <p>What is Phil’s favourite landmark in the rest of Britain?</p>
+                <label><input type="radio" name="lq8" value="castle" /> Edinburgh Castle</label>
+                <label><input type="radio" name="lq8" value="bridge" /> Tower Bridge</label>
+                <label><input type="radio" name="lq8" value="eye" /> The London Eye</label>
+                <label><input type="radio" name="lq8" value="stonehenge" /> Stonehenge</label>
+              </li>
+            </ol>
+            <button type="button" class="next-round" id="landmark-check">Check answers</button>
+            <p class="result-line" id="landmark-result" aria-live="polite"></p>
+          </section>
+        </div>
+        <div id="listening-people" hidden>
+          <button type="button" class="back-button" id="people-back" aria-label="Back to Listening">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Listening
+          </button>
+          <p class="eyebrow">Listening · Describing People</p>
+          <h1 id="people-title" tabindex="-1">Describing People</h1>
+          <p class="prompt">Listen to each person. They describe what they look like. The words are not written down. Then match each description to a picture.</p>
+          <div class="picture-tools">
+            <button type="button" class="tool-button" id="people-speed" aria-pressed="false">Play at 0.75 speed</button>
+          </div>
+          <div class="people-clips" id="people-clips"></div>
+          <p class="people-now" id="people-now" hidden></p>
+          <h2 class="people-heading">The pictures</h2>
+          <div class="people-grid" id="people-grid"></div>
+          <button type="button" class="next-round" id="people-check">Check answers</button>
+          <p class="result-line" id="people-result" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="panel" id="writing">
+        <div id="writing-topics">
+          <a class="back-button" href="#home" aria-label="Back to all skills">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            All skills
+          </a>
+          <h1 id="writing-title" tabindex="-1">Writing</h1>
+          <div class="game-choices">
+            <button type="button" class="game-choice game-choice-intro" id="open-intro">
+              <span class="game-name">Introduce yourself</span>
+              <span class="game-blurb">Read an example, then write about you.</span>
+            </button>
+            <button type="button" class="game-choice game-choice-photos" id="open-photo-writing">
+              <span class="game-name">Describe a picture</span>
+              <span class="game-blurb">Look at four photos and write what you see.</span>
+            </button>
+          </div>
+        </div>
+        <div id="writing-intro" hidden>
+          <button type="button" class="back-button" id="intro-back" aria-label="Back to Writing">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Writing
+          </button>
+          <p class="eyebrow">Writing · Introduce yourself</p>
+          <h1 id="intro-title" tabindex="-1">Introduce yourself</h1>
+          <p class="prompt">Read Amira’s introduction. Then write your own. Use full sentences.</p>
+          <div class="model-card">
+            <p class="model-label">Example</p>
+            <p>Hello! My name is Amira. I am 11 years old. I live in Bristol with my mum, my dad and my brother. I have one brother. His name is Sam and he is eight. I do not have a sister. In my free time I like drawing and playing football. My favourite colour is green. My favourite food is pasta.</p>
+          </div>
+          <p class="write-label">Try to write about</p>
+          <ul class="write-helps">
+            <li>your name</li>
+            <li>your age</li>
+            <li>where you live</li>
+            <li>your brothers and sisters</li>
+            <li>your hobbies</li>
+            <li>your favourite colour</li>
+            <li>your favourite food</li>
+          </ul>
+          <label class="write-label" for="intro-text">Your introduction</label>
+          <textarea class="write-box" id="intro-text" rows="8" placeholder="Hello! My name is …"></textarea>
+          <p class="write-note">Your writing stays on this computer.</p>
+        </div>
+        <div id="writing-photos" hidden>
+          <button type="button" class="back-button" id="photo-writing-back" aria-label="Back to Writing">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Writing
+          </button>
+          <p class="eyebrow">Writing · Describe a picture</p>
+          <h1 id="photo-writing-title" tabindex="-1">Describe a picture</h1>
+          <p class="prompt">Who is in the photo? Where are they? What are they doing? Write in full sentences.</p>
+          <article class="write-photo">
+            <img src="assets/write-breakfast.jpg" alt="A mum pours orange juice. A boy eats toast and a girl drinks milk. An orange cat sits on a chair." />
+            <div>
+              <h2>Breakfast</h2>
+              <label class="write-label" for="photo-text-0">Your description</label>
+              <textarea class="write-box photo-text" id="photo-text-0" rows="7" placeholder="In this photo, I can see …"></textarea>
+            </div>
+          </article>
+          <article class="write-photo">
+            <img src="assets/write-pool.jpg" alt="At a swimming pool, a girl swims, a boy jumps in, and another boy sits with a yellow towel. A red ball floats in the water." />
+            <div>
+              <h2>Swimming pool</h2>
+              <label class="write-label" for="photo-text-1">Your description</label>
+              <textarea class="write-box photo-text" id="photo-text-1" rows="7" placeholder="In this photo, I can see …"></textarea>
+            </div>
+          </article>
+          <article class="write-photo">
+            <img src="assets/write-farm.jpg" alt="On a farm, a boy feeds two goats from a bucket. A girl in red boots points at a black and white cow." />
+            <div>
+              <h2>On the farm</h2>
+              <label class="write-label" for="photo-text-2">Your description</label>
+              <textarea class="write-box photo-text" id="photo-text-2" rows="7" placeholder="In this photo, I can see …"></textarea>
+            </div>
+          </article>
+          <article class="write-photo">
+            <img src="assets/write-bus.jpg" alt="In the rain, a girl in a yellow coat and a boy with a backpack share a red umbrella. A red bus is coming." />
+            <div>
+              <h2>A rainy bus stop</h2>
+              <label class="write-label" for="photo-text-3">Your description</label>
+              <textarea class="write-box photo-text" id="photo-text-3" rows="7" placeholder="In this photo, I can see …"></textarea>
+            </div>
+          </article>
+          <p class="write-note">Your writing stays on this computer.</p>
+        </div>
+      </section>
+
       <section class="panel" id="grammar">
         <div id="grammar-topics">
           <a class="back-button" href="#home" aria-label="Back to all skills">
@@ -318,6 +699,10 @@
               <span class="game-name">Present simple versus present continuous</span>
               <span class="game-blurb">How these two tenses are different.</span>
             </button>
+            <button type="button" class="game-choice game-choice-past" data-lesson="past">
+              <span class="game-name">Past simple</span>
+              <span class="game-blurb">Finished actions, was and were, and past verbs.</span>
+            </button>
           </div>
         </div>
         <div id="grammar-lesson" hidden>
@@ -336,6 +721,6 @@
         </div>
       </section>
     </main>
-    <script src="app.js?v=20"></script>
+    <script src="app.js?v=28"></script>
   </body>
 </html>
