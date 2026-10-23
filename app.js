@@ -22,7 +22,7 @@ function loadProgress() {
   try {
     const saved = JSON.parse(localStorage.getItem(progressKey));
     if (!saved || typeof saved !== "object") {
-      return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, writing: {} };
+      return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, listeningDone: {}, writing: {} };
     }
     return {
       user: typeof saved.user === "string" ? saved.user : "",
@@ -31,10 +31,11 @@ function loadProgress() {
       pictureDone: saved.pictureDone && typeof saved.pictureDone === "object" ? saved.pictureDone : {},
       memorySeen: saved.memorySeen && typeof saved.memorySeen === "object" ? saved.memorySeen : {},
       grammarDone: saved.grammarDone && typeof saved.grammarDone === "object" ? saved.grammarDone : {},
+      listeningDone: saved.listeningDone && typeof saved.listeningDone === "object" ? saved.listeningDone : {},
       writing: saved.writing && typeof saved.writing === "object" ? saved.writing : {},
     };
   } catch {
-    return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, writing: {} };
+    return { user: "", stars: {}, pictures: {}, pictureDone: {}, memorySeen: {}, grammarDone: {}, listeningDone: {}, writing: {} };
   }
 }
 
@@ -115,6 +116,15 @@ function claimPending(id) {
     ]);
     progress.grammarDone[id] = [...mergedLessons];
     delete progress.grammarDone.pending;
+  }
+  if (!progress.listeningDone) progress.listeningDone = {};
+  if (Array.isArray(progress.listeningDone.pending) && progress.listeningDone.pending.length) {
+    const mergedListening = new Set([
+      ...(Array.isArray(progress.listeningDone[id]) ? progress.listeningDone[id] : []),
+      ...progress.listeningDone.pending,
+    ]);
+    progress.listeningDone[id] = [...mergedListening];
+    delete progress.listeningDone.pending;
   }
   Object.keys(progress.memorySeen).forEach((key) => {
     if (!key.startsWith("pending:")) return;
@@ -2043,7 +2053,22 @@ function checkLandmarks() {
     if (chosen && chosen.value === item.dataset.answer) correct += 1;
     else if (chosen) chosen.closest("label").classList.add("is-wrong");
   });
+  if (correct === items.length) {
+    landmarkResult.textContent = `${correct} of ${items.length} correct. ${awardListeningStar("landmarks")}`;
+    return;
+  }
   landmarkResult.textContent = `${correct} of ${items.length} correct.`;
+}
+
+function awardListeningStar(activityId) {
+  const id = currentId || "pending";
+  if (!progress.listeningDone) progress.listeningDone = {};
+  const done = new Set(Array.isArray(progress.listeningDone[id]) ? progress.listeningDone[id] : []);
+  if (done.has(activityId)) return "You already have this star.";
+  done.add(activityId);
+  progress.listeningDone[id] = [...done];
+  saveProgress();
+  return awardStar();
 }
 
 document.querySelector("#open-landmarks").addEventListener("click", showLandmarks);
