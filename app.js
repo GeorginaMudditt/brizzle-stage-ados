@@ -56,9 +56,69 @@ function pictureDoneList(id) {
   return Array.isArray(list) ? list.filter((index) => Number.isInteger(index)) : [];
 }
 
+function pictureStars(id) {
+  return Math.min(2, Math.floor(pictureDoneList(id).length / 5));
+}
+
 function totalStars(id) {
   if (!id) return 0;
-  return (progress.stars[id] || 0) + pictureDoneList(id).length;
+  return (progress.stars[id] || 0) + pictureStars(id);
+}
+
+const starCardRules = {
+  pictures: { pictures: true },
+  clothes: { listening: ["clothes-match", "clothes-memory"] },
+  verbs: { listening: ["verbs-match", "verbs-memory"] },
+  "clothes-match": { listening: ["clothes-match"] },
+  "clothes-memory": { listening: ["clothes-memory"] },
+  "verbs-match": { listening: ["verbs-match"] },
+  "verbs-memory": { listening: ["verbs-memory"] },
+  simple: { grammar: ["simple-be", "simple-verbs"] },
+  continuous: { grammar: ["continuous"] },
+  contrast: { grammar: ["contrast"] },
+  past: { grammar: ["past-match", "past-gaps"] },
+  landmarks: { listening: ["landmarks"] },
+  people: { listening: ["people"] },
+};
+
+function savedIds(store, id) {
+  const list = progress[store] && progress[store][id];
+  return new Set(Array.isArray(list) ? list : []);
+}
+
+function starCardState(activity) {
+  const rule = starCardRules[activity];
+  if (!rule) return null;
+  const owner = currentId || "pending";
+  if (rule.pictures) return { won: pictureStars(owner), total: 2 };
+  const ids = rule.grammar || rule.listening;
+  const done = savedIds(rule.grammar ? "grammarDone" : "listeningDone", owner);
+  return { won: ids.filter((item) => done.has(item)).length, total: ids.length };
+}
+
+function starCardMessage(activity, won, total) {
+  if (activity === "pictures") {
+    if (won <= 0) return "Win 2 stars";
+    if (won === 1) return "You have won 1 star";
+    return "✓ Completed. You have won 2 stars.";
+  }
+  if (won >= total) {
+    return total === 1
+      ? "✓ Completed. You have won a star for this activity."
+      : `✓ Completed. You have won ${total} stars for this activity.`;
+  }
+  if (won > 0) return `You have won ${won} of ${total} stars`;
+  return total === 1 ? "Win 1 star" : `Win ${total} stars`;
+}
+
+function refreshStarCards() {
+  document.querySelectorAll(".game-stars").forEach((node) => {
+    const state = starCardState(node.dataset.activity);
+    if (!state) return;
+    const done = state.won >= state.total && state.total > 0;
+    node.textContent = starCardMessage(node.dataset.activity, state.won, state.total);
+    node.classList.toggle("is-done", done);
+  });
 }
 
 function renderStars() {
@@ -69,6 +129,8 @@ function renderStars() {
     chip.textContent = `★ ${count}`;
     chip.setAttribute("aria-label", starLabel(count));
   });
+  refreshStarCards();
+  updatePictureProgress();
   if (!currentId) return;
   const count = totalStars(currentId);
   starCount.textContent = `★ ${count}`;
@@ -452,7 +514,7 @@ function updatePictureTools() {
   const done = pictureDoneList(owner).includes(index);
   const recording = recorder && recorder.state === "recording";
   pictureDoneButton.setAttribute("aria-pressed", String(done));
-  pictureDoneButton.textContent = done ? "★ Done" : "☆ Mark done";
+  pictureDoneButton.textContent = done ? "✓ Ticked" : "Tick this picture";
   pictureDoneButton.classList.toggle("is-done", done);
   recordButton.textContent = recording ? "Stop" : "Record";
   recordButton.classList.toggle("is-recording", recording);
@@ -476,8 +538,27 @@ function updatePictureTools() {
   });
 }
 
+function updatePictureProgress() {
+  const line = document.querySelector("#picture-progress");
+  if (!line) return;
+  const key = currentId || "pending";
+  const ticked = pictureDoneList(key).length;
+  const stars = pictureStars(key);
+  if (stars >= 2) {
+    line.textContent = "You have described ten pictures. You have won 2 stars.";
+    return;
+  }
+  const towardsNext = ticked % 5;
+  if (stars === 0) {
+    line.textContent = `You need to describe five pictures to win one star. ${towardsNext} of 5 ticked.`;
+    return;
+  }
+  line.textContent = `You have won 1 star. Describe five more pictures to win another. ${towardsNext} of 5 ticked.`;
+}
+
 function togglePictureDone() {
   const key = currentId || "pending";
+  const before = pictureStars(key);
   const list = new Set(pictureDoneList(key));
   const wasDone = list.has(pictureIndex);
   if (wasDone) list.delete(pictureIndex);
@@ -487,15 +568,13 @@ function togglePictureDone() {
   renderStars();
   markThumbs();
   updatePictureTools();
-  if (!wasDone && !currentId) {
+  const after = pictureStars(key);
+  if (!wasDone && after > before) {
+    const won = after === 1 ? "You have won 1 star." : "You have won 2 stars.";
     pictureStar.hidden = false;
-    pictureStar.textContent = "Choose your name to keep this star.";
-    status.textContent = pictureStar.textContent;
-    return;
-  }
-  if (!wasDone) {
-    pictureStar.hidden = false;
-    pictureStar.textContent = `${buttonLabel.textContent} earned a star. ${starLabel(totalStars(currentId))}.`;
+    pictureStar.textContent = currentId
+      ? `${buttonLabel.textContent} earned a star. ${won}`
+      : "Choose your name to keep this star.";
     status.textContent = pictureStar.textContent;
     return;
   }
@@ -710,6 +789,11 @@ function showTopicMenu() {
   topicBackLabel.textContent = currentTopic.title;
   topicEyebrow.textContent = `Vocabulary · ${currentTopic.title}`;
   vocabBack.setAttribute("aria-label", `Back to ${currentTopic.title}`);
+  const matchStars = vocabMenu.querySelector("[data-game='match'] .game-stars");
+  const memoryStars = vocabMenu.querySelector("[data-game='memory'] .game-stars");
+  if (matchStars) matchStars.dataset.activity = `${currentTopic.id}-match`;
+  if (memoryStars) memoryStars.dataset.activity = `${currentTopic.id}-memory`;
+  refreshStarCards();
   window.scrollTo(0, 0);
   topicTitle.focus();
 }
@@ -853,7 +937,7 @@ function startMatch() {
         draw();
       });
     } else {
-      note.textContent = `${currentTopic.done} ${awardStar()}`;
+      note.textContent = `${currentTopic.done} ${awardListeningStar(`${currentTopic.id}-match`)}`;
       again.textContent = "Play again";
       again.addEventListener("click", startMatch);
     }
@@ -953,7 +1037,7 @@ function startMemory() {
   function finish() {
     const note = document.createElement("p");
     note.className = "result-line";
-    note.textContent = `All pairs found in ${moves} moves. ${awardStar()}`;
+    note.textContent = `All pairs found in ${moves} moves. ${awardListeningStar(`${currentTopic.id}-memory`)}`;
     const again = document.createElement("button");
     again.type = "button";
     again.className = "next-round";

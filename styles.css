@@ -589,8 +589,8 @@ body:has(#reading:target) .card-grid {
   box-shadow: 0 4px 0 rgba(42, 24, 72, 0.1);
 }
 
-.tool-button.is-done {
-  background: #9a3412;
+#picture-done.is-done {
+  background: #178a4a;
   color: white;
 }
 
@@ -675,7 +675,7 @@ body:has(#reading:target) .card-grid {
 }
 
 .thumb.is-done::after {
-  content: "★";
+  content: "✓";
   position: absolute;
   top: 0.3rem;
   right: 0.3rem;
@@ -685,8 +685,9 @@ body:has(#reading:target) .card-grid {
   place-items: center;
   border-radius: 50%;
   background: white;
-  color: #9a3412;
-  font-size: 0.85rem;
+  color: #178a4a;
+  font-size: 0.9rem;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -1618,6 +1619,31 @@ body:has(#reading:target) .card-grid {
 .game-blurb {
   font-size: 0.98rem;
   line-height: 1.35;
+}
+
+.game-stars {
+  margin-top: auto;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--ink);
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.game-stars.is-done {
+  background: #e8f7ee;
+  color: #178a4a;
+}
+
+.picture-progress {
+  margin: 0.7rem 0 0;
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--purple);
 }
 
 .game-choice:focus-visible,

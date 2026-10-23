@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=30" />
+    <link rel="stylesheet" href="styles.css?v=31" />
   </head>
   <body>
     <header class="site-header">
@@ -162,6 +162,7 @@
             <button type="button" class="game-choice game-choice-picture" id="open-pictures">
               <span class="game-name">Describe a picture</span>
               <span class="game-blurb">Look carefully. Who is there, where are they, and what are they doing?</span>
+              <span class="game-stars" data-activity="pictures"></span>
             </button>
           </div>
         </div>
@@ -173,7 +174,8 @@
             Speaking
           </button>
           <h1 id="picture-title" tabindex="-1">Describe a picture</h1>
-          <p class="prompt">Look carefully. Who is there, where are they, and what are they doing? You can record your voice and then listen to the recording. Tick the star when you have finished.</p>
+          <p class="prompt">Look carefully. Who is there, where are they, and what are they doing? You can record your voice and then listen to the recording. Tick each picture when you have described it.</p>
+          <p class="picture-progress" id="picture-progress">You need to describe five pictures to win one star.</p>
         <div class="viewer">
           <button type="button" class="nav-arrow nav-prev" id="picture-prev" aria-label="Previous picture">
             <svg viewBox="0 0 20 20" aria-hidden="true">
@@ -197,7 +199,7 @@
           </button>
         </div>
         <div class="picture-tools">
-          <button type="button" class="tool-button" id="picture-done" aria-pressed="false">☆ Mark done</button>
+          <button type="button" class="tool-button" id="picture-done" aria-pressed="false">Tick this picture</button>
           <button type="button" class="tool-button" id="record-button">Record</button>
           <audio class="playback" id="playback" controls hidden></audio>
         </div>
@@ -220,10 +222,12 @@
             <button type="button" class="game-choice game-choice-topic" data-topic="clothes">
               <span class="game-name">Clothes</span>
               <span class="game-blurb">Words for what you wear.</span>
+              <span class="game-stars" data-activity="clothes"></span>
             </button>
             <button type="button" class="game-choice game-choice-topic game-choice-verbs" data-topic="verbs">
               <span class="game-name">Verbs</span>
               <span class="game-blurb">Words for what you do.</span>
+              <span class="game-stars" data-activity="verbs"></span>
             </button>
             <button type="button" class="game-choice game-choice-letters" id="open-letters">
               <span class="game-name">Letter Shake</span>
@@ -244,11 +248,13 @@
               <span class="game-kicker">Game 1</span>
               <span class="game-name">Match up</span>
               <span class="game-blurb">Pair each English word with the French one.</span>
+              <span class="game-stars" data-activity="clothes-match"></span>
             </button>
             <button type="button" class="game-choice game-choice-memory" data-game="memory">
               <span class="game-kicker">Game 2</span>
               <span class="game-name">Memory</span>
               <span class="game-blurb">Flip the cards and find the matching pairs.</span>
+              <span class="game-stars" data-activity="clothes-memory"></span>
             </button>
           </div>
         </div>
@@ -468,10 +474,12 @@
             <button type="button" class="game-choice game-choice-landmarks" id="open-landmarks">
               <span class="game-name">British Landmarks</span>
               <span class="game-blurb">Listen to Phil and Georgie, then answer the questions.</span>
+              <span class="game-stars" data-activity="landmarks"></span>
             </button>
             <button type="button" class="game-choice game-choice-people" id="open-people">
               <span class="game-name">Describing People</span>
               <span class="game-blurb">Listen to each person, then find their picture.</span>
+              <span class="game-stars" data-activity="people"></span>
             </button>
           </div>
         </div>
@@ -690,18 +698,22 @@
             <button type="button" class="game-choice game-choice-simple" data-lesson="simple">
               <span class="game-name">Present simple</span>
               <span class="game-blurb">Habits, facts, and the verb to be.</span>
+              <span class="game-stars" data-activity="simple"></span>
             </button>
             <button type="button" class="game-choice game-choice-continuous" data-lesson="continuous">
               <span class="game-name">Present continuous</span>
               <span class="game-blurb">Actions happening now.</span>
+              <span class="game-stars" data-activity="continuous"></span>
             </button>
             <button type="button" class="game-choice game-choice-contrast" data-lesson="contrast">
               <span class="game-name">Present simple versus present continuous</span>
               <span class="game-blurb">How these two tenses are different.</span>
+              <span class="game-stars" data-activity="contrast"></span>
             </button>
             <button type="button" class="game-choice game-choice-past" data-lesson="past">
               <span class="game-name">Past simple</span>
               <span class="game-blurb">Finished actions, was and were, and past verbs.</span>
+              <span class="game-stars" data-activity="past"></span>
             </button>
           </div>
         </div>
@@ -721,6 +733,6 @@
         </div>
       </section>
     </main>
-    <script src="app.js?v=30"></script>
+    <script src="app.js?v=31"></script>
   </body>
 </html>
